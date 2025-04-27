@@ -215,7 +215,7 @@
 			</div>
 		</section>
 
-		{#if cartItems.length > 0}
+		{#if cart.carts[restaurant.id] && cartItems.length > 0}
 			<div
 				class="bg-background border-border shadow-t-lg fixed right-0 bottom-0 left-0 z-50 border-t-2 p-4"
 			>
@@ -241,7 +241,8 @@
 						class="btn btn-primary mt-2 block text-center">Checkout</a
 					>
 					<button
-						onclick={() => {
+						onclick={(event) => {
+							event.preventDefault();
 							cart.deleteCart(restaurant.id);
 						}}
 						class="link hover:text-primary mt-2 block w-full text-center text-sm"

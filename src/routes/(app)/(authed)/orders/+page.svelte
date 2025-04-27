@@ -10,7 +10,7 @@
 	});
 </script>
 
-<Seo title="Carts - ChowBenin" description="View and manage your shopping carts." />
+<Seo title="My Orders - ChowBenin" description="View and manage your shopping carts." />
 
 {#if orders.loaded}
 	{#if orders.orders.length > 0}
@@ -90,8 +90,9 @@
 		</div>
 	{:else}
 		<div class="flex h-[500px] flex-col items-center justify-center">
-			<p>Your cart is empty.</p>
-			<a href="/" class="btn mt-2 text-sm">Discover Restaurants</a>
+			<p class="mt-2 text-lg font-semibold">No Orders Found</p>
+			<p class="text-sm text-gray-500">You have no orders yet.</p>
+			<a href="/" class="btn mt-4">Browse Restaurants</a>
 		</div>
 	{/if}
 {:else}

@@ -60,7 +60,10 @@ const createStore = () => {
 
 	const getOrderDetails = async (orderId: string) => {
 		if (!auth.currentUser) {
-			throw new Error('User not authenticated');
+			await auth.load();
+			if (!auth.currentUser) {
+				throw new Error('User not authenticated');
+			}
 		}
 
 		const { data, error } = await supabase
@@ -72,7 +75,7 @@ const createStore = () => {
 
 		if (error) {
 			console.error('Error fetching order details:', error);
-			throw new Error(`Error fetching order details: ${error.message}`);
+			return [];
 		}
 
 		return data;
@@ -86,7 +89,6 @@ const createStore = () => {
 		if (!auth.currentUser) {
 			await auth.load();
 			if (!auth.currentUser) {
-				console.error('User not authenticated');
 				loading = false;
 				loadLocked = false;
 				loaded = true;
