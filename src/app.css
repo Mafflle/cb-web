@@ -1,1 +1,111 @@
 @import 'tailwindcss';
+@import '@fontsource/nunito';
+
+@theme {
+	--color-primary: #ff7a00; /* Warm Orange - main action color */
+	--color-primary-dark: #e06b00; /* Slightly darker orange for hover states */
+
+	--color-background: #fff7e8; /* Warm Cream - website background */
+	--color-surface: #ffffff; /* For cards, secondary backgrounds if needed */
+
+	--color-text-heading: #543520; /* Deep Brown - for headings */
+	--color-text-body: #3b3028; /* Darker brown - for paragraph text */
+	--color-border: #e0d3c2; /* Light beige for subtle borders/dividers */
+
+	/* Accent Colors */
+	--color-accent-green: #00c853; /* Fresh Green - secondary accents */
+	--color-accent-red: #ff6347; /* Tomato Red - errors, alerts */
+
+	--font-sans: 'Nunito', sans-serif; /* Primary font */
+}
+
+@layer base {
+	body {
+		@apply bg-background text-text-body flex min-h-screen flex-col justify-between font-sans text-base font-[400];
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply text-text-heading font-bold;
+	}
+}
+
+@layer components {
+	/* Buttons */
+	.btn {
+		@apply bg-primary rounded px-4 py-2 font-bold text-white;
+	}
+	.btn:hover {
+		@apply bg-primary-dark;
+	}
+	.btn:disabled {
+		@apply cursor-not-allowed bg-gray-300 text-gray-500;
+	}
+	.btn:disabled:hover {
+		@apply bg-gray-300;
+	}
+
+	.btn-secondary {
+		@apply bg-accent-green rounded px-4 py-2 font-bold text-white;
+	}
+	.btn-secondary:hover {
+		@apply bg-accent-red;
+	}
+	.btn-secondary:disabled {
+		@apply cursor-not-allowed bg-gray-300 text-gray-500;
+	}
+	.btn-secondary:disabled:hover {
+		@apply bg-gray-300;
+	}
+
+	/* Forms */
+	.form-input {
+		@apply bg-surface ring-border w-full rounded-md p-2 ring;
+	}
+
+	.form-input:focus {
+		@apply ring-primary outline-none;
+	}
+
+	.form-input.form-error {
+		@apply ring-accent-red;
+	}
+
+	/* Form inputs with icon */
+	.form-input-icon {
+		@apply relative;
+	}
+	.form-input-icon input {
+		@apply pl-10;
+	}
+	.form-input-icon .icon {
+		@apply absolute top-1/2 left-2 -translate-y-1/2 transform text-gray-500;
+	}
+
+	/* Form phone input (with select and input) */
+	.form-phone-input {
+		@apply border-border bg-surface flex items-center rounded-md border;
+	}
+	.form-phone-input select {
+		@apply bg-surface border-border rounded-l-md p-2 ring-0;
+	}
+	.form-phone-input input {
+		@apply bg-surface w-full rounded-r-md border-none p-2 ring-0;
+	}
+	.form-phone-input select:focus,
+	.form-phone-input input:focus {
+		@apply ring-primary outline-none;
+	}
+
+	/* Form textarea */
+	.form-textarea {
+		@apply bg-surface ring-border w-full rounded-md p-2 ring;
+	}
+	.form-textarea:focus {
+		@apply ring-primary outline-none;
+	}
+}
