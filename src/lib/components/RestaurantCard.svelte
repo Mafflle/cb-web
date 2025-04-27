@@ -11,7 +11,6 @@
 				src={details.cover_image}
 				alt={details.name}
 				class="h-full w-full rounded-t-[5px] object-cover transition-all duration-300 ease-in-out hover:scale-105"
-				loading="lazy"
 			/>
 		</div>
 		<div class="my-2 flex h-full flex-col space-y-1 p-2">

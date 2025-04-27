@@ -18,6 +18,20 @@
 		}
 		loading = false;
 	});
+
+	const progressMap: any = {
+		pending_confirmation: 0,
+		confirmed: 1,
+		in_preparation: 2,
+		out_for_delivery: 3,
+		delivered: 4,
+		cancelled: 5
+	};
+	const currentProgress = $derived(progressMap[order?.order_status] || 0);
+
+	const isProgressCompleted = (status: string) => {
+		return order.payment_status === 'paid' && currentProgress >= progressMap[status];
+	};
 </script>
 
 <div class="flex flex-col gap-4">
@@ -89,7 +103,7 @@
 						})}
 					</span>
 				</li>
-				<li class="flex items-center justify-between">
+				<li class="flex items-center">
 					<iconify-icon
 						icon={order.payment_status === 'pending'
 							? 'ic:baseline-radio-button-unchecked'
@@ -98,7 +112,9 @@
 						width="20"
 						height="20"
 					></iconify-icon>
-					<span class="ml-2 font-semibold">Payment</span>
+					<span class="ml-2 font-semibold">
+						Payment {order.payment_status === 'pending' ? 'Pending' : 'Completed'}
+					</span>
 					{#if order.payment_status === 'pending'}
 						<button
 							class="text-primary ml-auto flex items-center justify-center text-sm font-bold hover:underline"
@@ -109,10 +125,10 @@
 				</li>
 				<li class="flex items-center">
 					<iconify-icon
-						icon={order.order_status === 'pending_confirmation'
-							? 'ic:baseline-radio-button-unchecked'
-							: 'lets-icons:check-fill'}
-						class:text-accent-green={order.order_status !== 'pending_confirmation'}
+						icon={isProgressCompleted('pending_confirmation')
+							? 'lets-icons:check-fill'
+							: 'ic:baseline-radio-button-unchecked'}
+						class:text-accent-green={isProgressCompleted('pending_confirmation')}
 						width="20"
 						height="20"
 					></iconify-icon>
@@ -120,10 +136,10 @@
 				</li>
 				<li class="flex items-center">
 					<iconify-icon
-						icon={order.order_status === 'in_preparation'
+						icon={isProgressCompleted('in_preparation')
 							? 'lets-icons:check-fill'
 							: 'ic:baseline-radio-button-unchecked'}
-						class:text-accent-green={order.order_status === 'in_preparation'}
+						class:text-accent-green={isProgressCompleted('in_preparation')}
 						width="20"
 						height="20"
 					></iconify-icon>
@@ -133,10 +149,10 @@
 				<!-- Out for delivery -->
 				<li class="flex items-center">
 					<iconify-icon
-						icon={order.order_status === 'out_for_delivery'
+						icon={isProgressCompleted('out_for_delivery')
 							? 'lets-icons:check-fill'
 							: 'ic:baseline-radio-button-unchecked'}
-						class:text-accent-green={order.order_status === 'out_for_delivery'}
+						class:text-accent-green={isProgressCompleted('out_for_delivery')}
 						width="20"
 						height="20"
 					></iconify-icon>
@@ -145,10 +161,10 @@
 
 				<li class="flex items-center">
 					<iconify-icon
-						icon={order.order_status === 'delivered'
+						icon={isProgressCompleted('delivered')
 							? 'lets-icons:check-fill'
 							: 'ic:baseline-radio-button-unchecked'}
-						class:text-accent-green={order.order_status === 'delivered'}
+						class:text-accent-green={isProgressCompleted('delivered')}
 						width="20"
 						height="20"
 					></iconify-icon>
@@ -208,21 +224,24 @@
 						</li>
 						<hr />
 					{/if}
+					<li class="span flex items-center justify-between">
+						<span>Total:</span> <span>{order.total} XOF</span>
+					</li>
 				</ul>
 			</div>
-			<p class="flex items-center justify-between text-sm font-semibold">
-				{#if order.payment_status === 'PENDING'}
-					<span>Total:</span>
-					<span class="text-lg font-bold">{order.total} XOF or &#8358;{order.total * 2.779}</span>
-				{:else}
-					<span>Payment Status:</span>
-					<span class="text-green-500">Paid</span>
-				{/if}
-			</p>
-			<button class="btn flex items-center justify-center text-sm"> Pay With Naira </button>
-			<button class="btn flex items-center justify-center text-sm" disabled>
-				Pay With Momo (Coming Soon)
-			</button>
+
+			{#if order.payment_status in ['pending', 'failed']}
+				<button class="btn flex items-center justify-center text-sm">
+					Pay With Naira (&#8358;{order.total * 2.779})
+				</button>
+				<button class="btn flex items-center justify-center text-sm" disabled>
+					Pay With Momo (Coming Soon)
+				</button>
+			{:else if order.payment_status === 'paid'}
+				<p class="text-sm font-semibold text-green-500">Payment Completed</p>
+			{:else}
+				<p class="text-sm font-semibold text-red-500">Payment Status: {order.payment_status}</p>
+			{/if}
 		</div>
 	{/if}
 </div>

@@ -38,7 +38,7 @@
 
 		{#if !authNav}
 			<div class="bg-surface flex items-center gap-4 rounded-md p-2 shadow-sm">
-				<a href="/carts" aria-label="Cart" class="relative">
+				<a href="/carts" aria-label="Cart" class="relative flex items-center justify-center">
 					<iconify-icon icon="solar:cart-3-outline" width="25" height="25"></iconify-icon>
 
 					{#if cart.cartCounts > 0}
