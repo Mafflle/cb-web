@@ -4,6 +4,7 @@ import cart from '$lib/stores/cart.svelte';
 import monnify from '$lib/services/monnify';
 import { showToast } from '../utils/toaster.svelte';
 import { goto } from '$app/navigation';
+import type { Tables } from '../types/database.types';
 
 interface OrderInput {
 	restaurantId: string;
@@ -94,7 +95,7 @@ const createStore = () => {
 			}
 		}
 
-		const order = await getOrderDetails(orderId);
+		const order: Tables<'restaurant'> = orders[orderId];
 
 		if (!order) {
 			throw new Error('Order not found');
@@ -108,9 +109,14 @@ const createStore = () => {
 		}
 
 		if (currency === 'naira') {
+			// Convert the amount to Naira
+			let amount = order.total * 2.779;
+			// Round up to two decimal places
+			amount = Math.ceil(amount * 100) / 100;
+
 			await monnify.initialize(
 				{
-					amount: order.total * 2.779,
+					amount: amount,
 					email: 'chowbenin@gmail.com',
 					fullName: 'Chow Benin',
 					description: `Order #${orderId} payment`

@@ -12,6 +12,10 @@
 		return orders.orders[orderId] || null;
 	});
 
+	$effect(() => {
+		console.log('Order:', order);
+	});
+
 	onMount(async () => {
 		loading = true;
 		if (!orders.loaded) {
