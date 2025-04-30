@@ -9,6 +9,7 @@
 	import { supportedCountries } from '$lib/utils/constants';
 	import orders from '$lib/stores/orders.svelte';
 	import { goto } from '$app/navigation';
+	import { showToast } from '../../../../lib/utils/toaster.svelte';
 
 	const orderChargeDetails = $state({
 		deliveryFee: 700,
@@ -91,14 +92,14 @@
 		}
 
 		if (!restaurantId) {
-			toast.error('No restaurant ID provided');
+			showToast({ message: 'No restaurant ID provided', type: 'error' });
 			goto('/');
 			return;
 		}
 		cartDetails = cart.getCart(restaurantId);
 
 		if (!cartDetails) {
-			toast.error('There is no cart for this restaurant');
+			showToast({ message: 'There is no cart for this restaurant', type: 'error' });
 			goto('/');
 		}
 		loading = false;
@@ -130,14 +131,14 @@
 				}))
 			};
 			let order = await orders.placeOrder(dataToSend);
-			toast.success('Order placed successfully');
+			showToast({ message: 'Order placed successfully', type: 'success' });
 			goto(`/orders/${order.id}`);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				errors = error.flatten().fieldErrors;
 			} else {
 				console.error('Unexpected error:', error);
-				toast.error('Checkout failed. Please try again.');
+				showToast({ message: 'An unexpected error occurred', type: 'error' });
 			}
 		} finally {
 			ordering = false;

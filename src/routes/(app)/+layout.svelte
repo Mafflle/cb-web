@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import { onMount } from 'svelte';
 	import cart from '$lib/stores/cart.svelte';
+	import orders from '$lib/stores/orders.svelte';
 	import { browser } from '$app/environment';
 
 	let { children } = $props();
@@ -10,6 +10,12 @@
 	$effect(() => {
 		if (browser && !cart.loaded) {
 			cart.load();
+		}
+	});
+
+	$effect(() => {
+		if (browser && !orders.loaded) {
+			orders.load();
 		}
 	});
 </script>

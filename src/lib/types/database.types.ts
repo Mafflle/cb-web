@@ -1,0 +1,444 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  public: {
+    Tables: {
+      internal_settings: {
+        Row: {
+          created_at: string
+          delivery_fee: number | null
+          exchange_rate: number | null
+          id: string
+          service_charge: number | null
+        }
+        Insert: {
+          created_at?: string
+          delivery_fee?: number | null
+          exchange_rate?: number | null
+          id?: string
+          service_charge?: number | null
+        }
+        Update: {
+          created_at?: string
+          delivery_fee?: number | null
+          exchange_rate?: number | null
+          id?: string
+          service_charge?: number | null
+        }
+        Relationships: []
+      }
+      items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          discount_price: number | null
+          id: string
+          image: string
+          menu_category_id: string | null
+          name: string
+          price: number | null
+          restaurant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          discount_price?: number | null
+          id?: string
+          image: string
+          menu_category_id?: string | null
+          name: string
+          price?: number | null
+          restaurant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          discount_price?: number | null
+          id?: string
+          image?: string
+          menu_category_id?: string | null
+          name?: string
+          price?: number | null
+          restaurant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_menu_category_id_fkey"
+            columns: ["menu_category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_category"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_category: {
+        Row: {
+          cover_image: string
+          created_at: string | null
+          description: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          cover_image: string
+          created_at?: string | null
+          description: string
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          cover_image?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          menu_item_id: string
+          order_id: string
+          price: number
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_item_id: string
+          order_id: string
+          price: number
+          quantity: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_item_id?: string
+          order_id?: string
+          price?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_item_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_item_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address: string
+          created_at: string
+          delivery_fee: number
+          id: string
+          name: string
+          order_status: Database["public"]["Enums"]["order_status"]
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          phone: string
+          restaurant_id: string
+          service_charge: number
+          special_instructions: string
+          total: number
+          total_price: number
+          user_id: string
+          whatsapp: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          delivery_fee: number
+          id?: string
+          name: string
+          order_status?: Database["public"]["Enums"]["order_status"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          phone: string
+          restaurant_id: string
+          service_charge: number
+          special_instructions: string
+          total?: number
+          total_price: number
+          user_id: string
+          whatsapp: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          delivery_fee?: number
+          id?: string
+          name?: string
+          order_status?: Database["public"]["Enums"]["order_status"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          phone?: string
+          restaurant_id?: string
+          service_charge?: number
+          special_instructions?: string
+          total?: number
+          total_price?: number
+          user_id?: string
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant: {
+        Row: {
+          address: string
+          cover_image: string
+          created_at: string | null
+          description: string
+          id: string
+          is_active: boolean
+          logo: string
+          name: string
+          phone_no: string
+          slug: string
+          updated_at: string | null
+          whatsapp: string
+        }
+        Insert: {
+          address: string
+          cover_image: string
+          created_at?: string | null
+          description: string
+          id?: string
+          is_active?: boolean
+          logo: string
+          name: string
+          phone_no: string
+          slug?: string
+          updated_at?: string | null
+          whatsapp: string
+        }
+        Update: {
+          address?: string
+          cover_image?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          logo?: string
+          name?: string
+          phone_no?: string
+          slug?: string
+          updated_at?: string | null
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      place_order: {
+        Args: { user_id: string; order_data: Json }
+        Returns: string
+      }
+    }
+    Enums: {
+      order_status:
+        | "pending_confirmation"
+        | "confirmed"
+        | "in_preparation"
+        | "out_for_delivery"
+        | "delivered"
+        | "cancelled"
+        | "failed"
+        | "refunded"
+      payment_status: "pending" | "paid" | "failed" | "refunded"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DefaultSchema = Database[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      order_status: [
+        "pending_confirmation",
+        "confirmed",
+        "in_preparation",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+        "failed",
+        "refunded",
+      ],
+      payment_status: ["pending", "paid", "failed", "refunded"],
+    },
+  },
+} as const
+

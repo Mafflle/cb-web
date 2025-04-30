@@ -13,16 +13,16 @@
 <Seo title="My Orders - ChowBenin" description="View and manage your shopping carts." />
 
 {#if orders.loaded}
-	{#if orders.orders.length > 0}
+	{#if orders.keys.length > 0}
 		<div class=" grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-			{#each orders.orders as order}
+			{#each orders.keys as key}
 				<div class="bg-surface border-border flex flex-col gap-4 rounded-lg border p-4 shadow-md">
 					<div class="">
-						<h2 class="text-lg font-bold">{order.restaurant.name}</h2>
+						<h2 class="text-lg font-bold">{orders.orders[key].restaurant.name}</h2>
 
 						<p class="mt-1 text-sm">
-							{order.order_status === 'COMPLETED' ? 'Delivered' : 'Delivering'} to
-							<span class="font-semibold">{order.address}</span>
+							{orders.orders[key].order_status === 'COMPLETED' ? 'Delivered' : 'Delivering'} to
+							<span class="font-semibold">{orders.orders[key].address}</span>
 						</p>
 					</div>
 
@@ -31,30 +31,33 @@
 						<h3 class="text-md font-semibold">Order Details:</h3>
 						<ul class="space-y-2 text-sm font-semibold">
 							<li class="span flex items-center justify-between">
-								<span>Sub-Total:</span> <span>{order.total_price} XOF</span>
+								<span>Sub-Total:</span> <span>{orders.orders[key].total_price} XOF</span>
 							</li>
 							<hr />
 
 							<li class="span flex items-center justify-between">
-								<span>Delivery Fee:</span> <span>{order.delivery_fee} XOF</span>
+								<span>Delivery Fee:</span> <span>{orders.orders[key].delivery_fee} XOF</span>
 							</li>
 							<hr />
 
-							{#if order.service_charge > 0}
+							{#if orders.orders[key].service_charge > 0}
 								<li class="span flex items-center justify-between">
-									<span>Service Charge:</span> <span>{order.service_charge} XOF</span>
+									<span>Service Charge:</span> <span>{orders.orders[key].service_charge} XOF</span>
 								</li>
 								<hr />
 							{/if}
 							<li class="span flex items-center justify-between">
-								<span>Total:</span> <span>{order.total} XOF</span>
+								<span>Total:</span> <span>{orders.orders[key].total} XOF</span>
 							</li>
 						</ul>
 					</div>
 
 					<div>
-						<a href="/orders/{order.id}" class="btn flex items-center justify-center text-sm">
-							{#if order.payment_status === 'PENDING'}
+						<a
+							href="/orders/{orders.orders[key].id}"
+							class="btn flex items-center justify-center text-sm"
+						>
+							{#if orders.orders[key].payment_status === 'PENDING'}
 								Pay Now
 								<iconify-icon icon="ic:round-play-arrow" width="16" height="16"></iconify-icon>
 							{:else}

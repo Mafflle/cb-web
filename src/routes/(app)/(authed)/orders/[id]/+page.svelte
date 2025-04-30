@@ -4,23 +4,26 @@
 	import orders from '$lib/stores/orders.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import Breadcrumb from '../../../../../lib/components/Breadcrumb.svelte';
+	import Breadcrumb from '$lib/components/Breadcrumb.svelte';
 
 	const orderId = page.params.id;
 	let loading = $state(false);
-	let order = $state<null | any>(null);
+	let order = $derived.by(() => {
+		return orders.orders[orderId] || null;
+	});
 
 	onMount(async () => {
 		loading = true;
-		order = await orders.getOrderDetails(orderId);
+		if (!orders.loaded) {
+			await orders.load();
+		}
 		if (!order) {
-			goto('/404');
+			goto('/orders');
 		}
 		loading = false;
 	});
 
 	const progressMap: any = {
-		pending_confirmation: 0,
 		confirmed: 1,
 		in_preparation: 2,
 		out_for_delivery: 3,
@@ -31,6 +34,14 @@
 
 	const isProgressCompleted = (status: string) => {
 		return order.payment_status === 'paid' && currentProgress >= progressMap[status];
+	};
+
+	const handlePayWithNaira = async () => {
+		try {
+			await orders.pay(orderId, 'naira');
+		} catch (error) {
+			console.error('Error processing payment:', error);
+		}
 	};
 </script>
 
@@ -125,10 +136,10 @@
 				</li>
 				<li class="flex items-center">
 					<iconify-icon
-						icon={isProgressCompleted('pending_confirmation')
+						icon={isProgressCompleted('confirmed')
 							? 'lets-icons:check-fill'
 							: 'ic:baseline-radio-button-unchecked'}
-						class:text-accent-green={isProgressCompleted('pending_confirmation')}
+						class:text-accent-green={isProgressCompleted('confirmed')}
 						width="20"
 						height="20"
 					></iconify-icon>
@@ -230,8 +241,8 @@
 				</ul>
 			</div>
 
-			{#if order.payment_status in ['pending', 'failed']}
-				<button class="btn flex items-center justify-center text-sm">
+			{#if order.payment_status === 'pending' || order.payment_status === 'failed'}
+				<button onclick={handlePayWithNaira} class="btn flex items-center justify-center text-sm">
 					Pay With Naira (&#8358;{order.total * 2.779})
 				</button>
 				<button class="btn flex items-center justify-center text-sm" disabled>
