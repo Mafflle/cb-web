@@ -19,7 +19,7 @@
 		aria-label="Country code"
 		aria-invalid={error !== null}
 	>
-		{#each Object.keys(supportedCountries) as code}
+		{#each Object.keys(supportedCountries) as code, index (index)}
 			<option value={code}>{code}</option>
 		{/each}
 	</select>

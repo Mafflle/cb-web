@@ -7,6 +7,7 @@
 	import { goto } from '$app/navigation';
 	import Seo from '../../../../lib/components/Seo.svelte';
 	import Breadcrumb from '../../../../lib/components/Breadcrumb.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
 
 	let loading = $state(true);
 	let menuItems = $state<null | any[]>(null);
@@ -140,7 +141,7 @@
 					<div
 						class="grid grid-cols-1 gap-x-[8px] gap-y-5 md:grid-cols-2 md:gap-x-[10px] lg:grid-cols-3 lg:gap-x-[16px]"
 					>
-						{#each menuItems as item, index}
+						{#each menuItems as item, index (index)}
 							<div
 								class="border-border bg-surface rounded-lg border p-4 shadow-md transition-all hover:shadow-lg"
 							>
@@ -167,12 +168,12 @@
 								<!-- Buttons to increase/decrease quantity and add to cart -->
 
 								<div class="mt-4 flex items-center justify-between">
-									<p class="text-text-heading text-lg font-bold">
+									<p class="text-text-heading text-sm font-bold">
 										{#if item.discount_price}
-											<span class=" line-through">XOF {item.price}</span>
-											<span class="">XOF {item.discount_price}</span>
+											<span class=" line-through">{appSettings.formatPrice(item.price)}</span><br />
+											<span class="">{appSettings.formatPrice(item.discount_price)}</span>
 										{:else}
-											XOF {item.price}
+											{appSettings.formatPrice(item.price)}
 										{/if}
 									</p>
 									{#if cartItems.find((i) => i.id === item.id)}
@@ -230,8 +231,8 @@
 
 				<div class="flex flex-col">
 					<p class=" font-bold">
-						Total: XOF
-						{cart.carts[restaurant.id].total}
+						Total:
+						{appSettings.formatPrice(cart.carts[restaurant.id].total)}
 					</p>
 					<p class="text-sm text-gray-600">
 						{cartItems.length} item{cartItems.length > 1 ? 's' : ''} in cart

@@ -11,7 +11,7 @@
 	});
 
 	// Debounce function for search input
-	function debounce(func: Function, delay: number) {
+	function debounce(func: (...args: any[]) => void, delay: number) {
 		let timeout: NodeJS.Timeout;
 		return function (...args: any[]) {
 			clearTimeout(timeout);
@@ -66,7 +66,7 @@
 		<div
 			class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-x-[10px] lg:grid-cols-4 lg:gap-x-[16px]"
 		>
-			{#each restaurant.keys as key}
+			{#each restaurant.keys as key (key)}
 				<RestaurantCard details={restaurant.restaurants[key]} />
 			{/each}
 		</div>

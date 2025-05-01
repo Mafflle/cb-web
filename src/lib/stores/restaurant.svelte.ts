@@ -1,11 +1,16 @@
 import supabase from '../supabase';
+import type { Tables } from '../types/database.types';
 
 const createStore = () => {
 	let loaded = $state(false);
 	let loading = $state(false);
 	let loadLocked = $state(false);
-	let restaurantsById = $state<any>({});
-	let restaurantsBySlug = $state<any>({});
+	let restaurantsById = $state<{
+		[id: string]: Tables<'restaurant'>
+	}>({});
+	let restaurantsBySlug = $state<{
+		[slug: string]: Tables<'restaurant'>
+	}>({});
 	const keys = $derived.by(() => {
 		return Object.keys(restaurantsById);
 	});
@@ -29,8 +34,8 @@ const createStore = () => {
 
 		if (data) {
 			// Update the local store with the fetched restaurant
-			restaurantsById[data.id] = data;
-			restaurantsBySlug[data.slug] = data;
+			restaurantsById[data.id] = data as Tables<'restaurant'>;
+			restaurantsBySlug[data.slug] = data as Tables<'restaurant'>;
 			return data;
 		}
 
@@ -56,8 +61,8 @@ const createStore = () => {
 
 		if (data) {
 			// Update the local store with the fetched restaurant
-			restaurantsById[data.id] = data;
-			restaurantsBySlug[data.slug] = data;
+			restaurantsById[data.id] = data as Tables<'restaurant'>;
+			restaurantsBySlug[data.slug] = data as Tables<'restaurant'>;
 			return data;
 		}
 

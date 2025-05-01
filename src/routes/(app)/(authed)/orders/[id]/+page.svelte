@@ -1,26 +1,31 @@
 <script lang="ts">
 	import { page } from '$app/state';
-
-	import orders from '$lib/stores/orders.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import Breadcrumb from '../../../../../lib/components/Breadcrumb.svelte';
+
+	import Breadcrumb from '$lib/components/Breadcrumb.svelte';
+
+	import orders from '$lib/stores/orders.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
 
 	const orderId = page.params.id;
 	let loading = $state(false);
-	let order = $state<null | any>(null);
+	let order = $derived.by(() => {
+		return orders.orders[orderId] || null;
+	});
 
 	onMount(async () => {
 		loading = true;
-		order = await orders.getOrderDetails(orderId);
+		if (!orders.loaded) {
+			await orders.load();
+		}
 		if (!order) {
-			goto('/404');
+			goto('/orders');
 		}
 		loading = false;
 	});
 
 	const progressMap: any = {
-		pending_confirmation: 0,
 		confirmed: 1,
 		in_preparation: 2,
 		out_for_delivery: 3,
@@ -31,6 +36,14 @@
 
 	const isProgressCompleted = (status: string) => {
 		return order.payment_status === 'paid' && currentProgress >= progressMap[status];
+	};
+
+	const handlePayWithNaira = async () => {
+		try {
+			await orders.pay(orderId, 'naira');
+		} catch (error) {
+			console.error('Error processing payment:', error);
+		}
 	};
 </script>
 
@@ -117,6 +130,7 @@
 					</span>
 					{#if order.payment_status === 'pending'}
 						<button
+							onclick={handlePayWithNaira}
 							class="text-primary ml-auto flex items-center justify-center text-sm font-bold hover:underline"
 						>
 							Pay Now
@@ -125,10 +139,10 @@
 				</li>
 				<li class="flex items-center">
 					<iconify-icon
-						icon={isProgressCompleted('pending_confirmation')
+						icon={isProgressCompleted('confirmed')
 							? 'lets-icons:check-fill'
 							: 'ic:baseline-radio-button-unchecked'}
-						class:text-accent-green={isProgressCompleted('pending_confirmation')}
+						class:text-accent-green={isProgressCompleted('confirmed')}
 						width="20"
 						height="20"
 					></iconify-icon>
@@ -193,7 +207,7 @@
 		<div class="bg-surface border-border flex flex-col gap-4 rounded-lg border p-4 shadow-md">
 			<h2 class="text-lg font-bold">Items</h2>
 			<ul class="space-y-2 text-sm font-semibold">
-				{#each order.order_items as item, index}
+				{#each order.order_items as item, index (index)}
 					<li class="span flex items-center justify-between">
 						<span>{item.items.name} x ({item.quantity})</span> <span>{item.price} XOF</span>
 					</li>
@@ -230,9 +244,9 @@
 				</ul>
 			</div>
 
-			{#if order.payment_status in ['pending', 'failed']}
-				<button class="btn flex items-center justify-center text-sm">
-					Pay With Naira (&#8358;{order.total * 2.779})
+			{#if order.payment_status === 'pending' || order.payment_status === 'failed'}
+				<button onclick={handlePayWithNaira} class="btn flex items-center justify-center text-sm">
+					Pay With Naira ({appSettings.formatPrice(order.total)})
 				</button>
 				<button class="btn flex items-center justify-center text-sm" disabled>
 					Pay With Momo (Coming Soon)

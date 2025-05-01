@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import cart from '$lib/stores/cart.svelte';
 	import { onMount } from 'svelte';
-	import Seo from '$lib/components/Seo.svelte';
-	import { toast } from 'svelte-sonner';
-	import PhoneInput from '$lib/components/forms/PhoneInput.svelte';
 	import { z } from 'zod';
 	import { supportedCountries } from '$lib/utils/constants';
-	import orders from '$lib/stores/orders.svelte';
 	import { goto } from '$app/navigation';
+	import { showToast } from '$lib/utils/toaster.svelte';
+
+	import Seo from '$lib/components/Seo.svelte';
+	import PhoneInput from '$lib/components/forms/PhoneInput.svelte';
+
+	import cart from '$lib/stores/cart.svelte';
+	import orders from '$lib/stores/orders.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
 
 	const orderChargeDetails = $state({
 		deliveryFee: 700,
@@ -91,14 +94,14 @@
 		}
 
 		if (!restaurantId) {
-			toast.error('No restaurant ID provided');
+			showToast({ message: 'No restaurant ID provided', type: 'error' });
 			goto('/');
 			return;
 		}
 		cartDetails = cart.getCart(restaurantId);
 
 		if (!cartDetails) {
-			toast.error('There is no cart for this restaurant');
+			showToast({ message: 'There is no cart for this restaurant', type: 'error' });
 			goto('/');
 		}
 		loading = false;
@@ -130,14 +133,20 @@
 				}))
 			};
 			let order = await orders.placeOrder(dataToSend);
-			toast.success('Order placed successfully');
-			goto(`/orders/${order.id}`);
+			showToast({ message: 'Order placed successfully', type: 'success' });
+			if (order?.payment_status === 'pending') {
+				showToast({
+					message: 'Please complete your payment to confirm your order',
+					type: 'info'
+				});
+				goto(`/orders/${order.id}`);
+			}
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				errors = error.flatten().fieldErrors;
 			} else {
 				console.error('Unexpected error:', error);
-				toast.error('Checkout failed. Please try again.');
+				showToast({ message: 'An unexpected error occurred', type: 'error' });
 			}
 		} finally {
 			ordering = false;
@@ -173,7 +182,7 @@
 						placeholder="John Doe"
 					/>
 					{#if errors.name}
-						{#each errors.name as error}
+						{#each errors.name as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
@@ -189,7 +198,7 @@
 						placeholder="123 Main St, Cotonou"
 					/>
 					{#if errors.address}
-						{#each errors.address as error}
+						{#each errors.address as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
@@ -202,7 +211,7 @@
 						error={errors.phone}
 					/>
 					{#if errors.phone}
-						{#each errors.phone as error}
+						{#each errors.phone as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
@@ -218,7 +227,7 @@
 						error={errors.whatsapp}
 					/>
 					{#if errors.whatsapp}
-						{#each errors.whatsapp as error}
+						{#each errors.whatsapp as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
@@ -249,7 +258,7 @@
 					></textarea>
 
 					{#if errors.specialInstructions}
-						{#each errors.specialInstructions as error}
+						{#each errors.specialInstructions as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
@@ -257,32 +266,38 @@
 
 				<div class="bg-surface mt-4 p-4 text-sm">
 					<ul class="w-full">
-						{#each cartDetails.items as item}
+						{#each cartDetails.items as item, index (index)}
 							<li class="flex justify-between border-b p-2">
 								<span>{item.name}</span>
-								<span>{item.quantity} x {item.discount_price || item.price} XOF</span>
+								<span
+									>{item.quantity} x {appSettings.formatPrice(
+										item.discount_price || item.price
+									)}</span
+								>
 							</li>
 						{/each}
 					</ul>
 					<ul class="mt-4 w-full space-y-2 px-2">
 						<li class="flex justify-between">
 							<span>Sub-Total:</span>
-							<span>{cartDetails.total} XOF</span>
+							<span>{appSettings.formatPrice(cartDetails.total)}</span>
 						</li>
 						<li class="flex justify-between">
 							<span>Delivery Fee:</span>
-							<span> {orderChargeDetails.deliveryFee} XOF</span>
+							<span>{appSettings.formatPrice(appSettings.deliveryFee)}</span>
 						</li>
 						<li class="flex justify-between">
 							<span>Service Fee:</span>
-							<span> {orderChargeDetails.serviceCharge} XOF</span>
+							<span>{appSettings.formatPrice(appSettings.serviceCharge)}</span>
 						</li>
 						<li class="flex justify-between">
 							<span>Total:</span>
 							<span
-								>{cartDetails.total +
-									orderChargeDetails.deliveryFee +
-									orderChargeDetails.serviceCharge} XOF</span
+								>{appSettings.formatPrice(
+									cartDetails.total +
+										orderChargeDetails.deliveryFee +
+										orderChargeDetails.serviceCharge
+								)}</span
 							>
 						</li>
 					</ul>

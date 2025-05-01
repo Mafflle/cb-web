@@ -15,7 +15,7 @@
 {#if cart.loaded}
 	{#if cart.keys.length > 0}
 		<div class=" grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-			{#each cart.keys as key}
+			{#each cart.keys as key (key)}
 				<div class="bg-surface border-border flex flex-col gap-4 rounded-lg border p-4 shadow-md">
 					{#if cart.carts[key]?.restaurantDetails}
 						<div class="flex justify-between gap-2">
@@ -36,7 +36,7 @@
 						<div class="flex flex-col gap-2 rounded-lg bg-gray-100 p-2">
 							<h3 class="text-md font-semibold">Items in Cart:</h3>
 							<ul class="space-y-2 text-sm">
-								{#each cart.carts[key].items as item}
+								{#each cart.carts[key].items as item, index (index)}
 									<li class="flex items-center justify-between">
 										<div>
 											<p>{item.name} x {item.quantity}</p>

@@ -63,7 +63,7 @@
 			return;
 		}
 
-		const { data, error } = await supabase.auth.verifyOtp({
+		const { error } = await supabase.auth.verifyOtp({
 			phone: `${countryCode}${cleanedPhoneNumber}`,
 			token: otp,
 			type: 'sms'
@@ -156,7 +156,7 @@
 						{/if}
 					</button>
 					<p class="mt-4 text-sm text-gray-500">
-						Didn’t receive the OTP?{' '}
+						Didn’t receive the OTP?
 						<button
 							onclick={(event) => {
 								event.preventDefault();
@@ -168,9 +168,9 @@
 						</button>
 					</p>
 					<p class="mt-4 text-sm text-gray-500">
-						By logging in, you agree to our{' '}
+						By logging in, you agree to our
 						<a href="/privacy-policy" class="text-primary hover:underline">Privacy Policy</a>
-						and{' '}
+						and
 						<a href="/terms-of-service" class="text-primary hover:underline">Terms of Service</a>.
 					</p>
 				</form>
