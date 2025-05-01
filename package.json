@@ -3,6 +3,10 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"lint-staged": {
+		"*.{js,svelte}": "eslint --cache --fix",
+		"*.{cjs,js,svelte,json,scss,css,md}": "prettier --ignore-unknown --write --plugin prettier-plugin-svelte"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",

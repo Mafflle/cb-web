@@ -1,6 +1,7 @@
 <script lang="ts">
 	import cart from '$lib/stores/cart.svelte';
 	import auth from '$lib/stores/auth.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
 	import { clickOutside } from '$lib/utils/clickoutside.svelte';
 
 	let { authNav = false }: { authNav?: boolean } = $props();
@@ -12,6 +13,7 @@
 	};
 
 	let loggingOut = $state(false);
+	let currencyKeys = $derived(Object.keys(appSettings.currencies));
 
 	const logout = async () => {
 		loggingOut = true;
@@ -38,6 +40,27 @@
 
 		{#if !authNav}
 			<div class="bg-surface flex items-center gap-4 rounded-md p-2 shadow-sm">
+				<!-- Currency select dropdown -->
+				<select
+					class="bg-surface text-text-body focus:outline-none"
+					onchange={async (e) => {
+						if (e.target && e.target.value !== appSettings.activeCurrency) {
+							await appSettings.setActiveCurrency(e.target.value);
+						}
+					}}
+					aria-label="Select currency"
+				>
+					{#each currencyKeys as key, index (index)}
+						<option
+							value={key}
+							class="bg-surface text-text-body"
+							selected={key === appSettings.activeCurrency?.code}
+						>
+							{appSettings.currencies[key].code}
+						</option>
+					{/each}
+				</select>
+
 				<a href="/carts" aria-label="Cart" class="relative flex items-center justify-center">
 					<iconify-icon icon="solar:cart-3-outline" width="25" height="25"></iconify-icon>
 

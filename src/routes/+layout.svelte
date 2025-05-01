@@ -8,6 +8,7 @@
 	import auth from '$lib/stores/auth.svelte';
 	import cart from '$lib/stores/cart.svelte';
 	import orders from '$lib/stores/orders.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
 
 	let { children } = $props();
 
@@ -21,8 +22,21 @@
 			await orders.load();
 		}
 	});
+
+	$effect(() => {
+		if (browser && !appSettings.loaded) {
+			appSettings.load();
+		}
+	});
 </script>
 
 <Toaster richColors position="bottom-right" />
 
-{@render children()}
+{#if appSettings.loading}
+	<div class="flex h-screen items-center justify-center">
+		<iconify-icon icon="eos-icons:loading" class=" text-primary" width="32" height="32"
+		></iconify-icon>
+	</div>
+{:else}
+	{@render children()}
+{/if}

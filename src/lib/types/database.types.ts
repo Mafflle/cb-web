@@ -34,6 +34,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      currencies: {
+        Row: {
+          code: string
+          created_at: string
+          is_default: boolean
+          name: string
+          payment_method_id: string
+          rate_to_xof: number
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_default?: boolean
+          name: string
+          payment_method_id: string
+          rate_to_xof: number
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_default?: boolean
+          name?: string
+          payment_method_id?: string
+          rate_to_xof?: number
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "currencies_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_settings: {
         Row: {
           created_at: string
@@ -239,6 +280,75 @@ export type Database = {
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurant"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_methods: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_xof: number
+          created_at: string
+          id: number
+          order_id: string
+          paid_at: string | null
+          payment_method_id: string
+          reference: string
+          status: Database["public"]["Enums"]["payment_status"]
+          user_id: string
+        }
+        Insert: {
+          amount_xof: number
+          created_at?: string
+          id?: number
+          order_id: string
+          paid_at?: string | null
+          payment_method_id: string
+          reference: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          user_id: string
+        }
+        Update: {
+          amount_xof?: number
+          created_at?: string
+          id?: number
+          order_id?: string
+          paid_at?: string | null
+          payment_method_id?: string
+          reference?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
         ]

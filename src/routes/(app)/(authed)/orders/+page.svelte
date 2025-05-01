@@ -15,7 +15,7 @@
 {#if orders.loaded}
 	{#if orders.keys.length > 0}
 		<div class=" grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-			{#each orders.keys as key}
+			{#each orders.keys as key (key)}
 				<div class="bg-surface border-border flex flex-col gap-4 rounded-lg border p-4 shadow-md">
 					<div class="">
 						<h2 class="text-lg font-bold">{orders.orders[key].restaurant.name}</h2>

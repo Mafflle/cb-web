@@ -1,10 +1,12 @@
 import supabase from '../supabase';
-import auth from '$lib/stores/auth.svelte';
-import cart from '$lib/stores/cart.svelte';
 import monnify from '$lib/services/monnify';
 import { showToast } from '../utils/toaster.svelte';
 import { goto } from '$app/navigation';
 import type { Tables } from '../types/database.types';
+
+import auth from '$lib/stores/auth.svelte';
+import cart from '$lib/stores/cart.svelte';
+import appSettings from '$lib/stores/appSettings.svelte';
 
 interface OrderInput {
 	restaurantId: string;
@@ -95,7 +97,7 @@ const createStore = () => {
 			}
 		}
 
-		const order: Tables<'restaurant'> = orders[orderId];
+		const order: Tables<'orders'> = orders[orderId];
 
 		if (!order) {
 			throw new Error('Order not found');
@@ -103,16 +105,14 @@ const createStore = () => {
 
 		if (
 			(order.payment_status !== 'pending' && order.payment_status !== 'failed') ||
-			order.status === 'cancelled'
+			order.order_status === 'cancelled'
 		) {
 			throw new Error('Order already paid or cancelled');
 		}
 
 		if (currency === 'naira') {
 			// Convert the amount to Naira
-			let amount = order.total * 2.779;
-			// Round up to two decimal places
-			amount = Math.ceil(amount * 100) / 100;
+			const amount = appSettings.getConvertedPrice(order.total, 'NGN');
 
 			await monnify.initialize(
 				{
@@ -173,7 +173,7 @@ const createStore = () => {
 
 		await getOrders();
 
-		supabase
+		await supabase
 			.channel('schema-db-changes')
 			.on(
 				'postgres_changes',
