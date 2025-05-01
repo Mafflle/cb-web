@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import Monnify from 'monnify-js';
+import Monnify from '$lib/utils/monnify';
 import { showToast } from '../utils/toaster.svelte';
 
 const MONNIFY_API_KEY = import.meta.env.VITE_MONNIFY_API_KEY;

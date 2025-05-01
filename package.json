@@ -50,7 +50,6 @@
 		"@fontsource/nunito": "^5.2.5",
 		"@supabase/supabase-js": "^2.49.4",
 		"iconify-icon": "^2.3.0",
-		"monnify-js": "^1.0.2",
 		"svelte-sonner": "^0.3.28",
 		"zod": "^3.24.3"
 	}
