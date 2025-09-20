@@ -3,6 +3,7 @@
 	import auth from '$lib/stores/auth.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
 	import { clickOutside } from '$lib/utils/clickoutside.svelte';
+	import LogoutButton from './LogoutButton.svelte';
 
 	let { authNav = false }: { authNav?: boolean } = $props();
 
@@ -15,10 +16,13 @@
 	let loggingOut = $state(false);
 	let currencyKeys = $derived(Object.keys(appSettings.currencies));
 
-	const logout = async () => {
-		loggingOut = true;
-		await auth.logout();
-		loggingOut = false;
+	const handleLogout = async () => {
+		
+			loggingOut = true;
+			await auth.logout();
+			loggingOut = false;
+			dropdownOpen = false;
+
 	};
 </script>
 
@@ -44,8 +48,9 @@
 				<select
 					class="bg-surface text-text-body focus:outline-none"
 					onchange={async (e) => {
-						if (e.target && e.target.value !== appSettings.activeCurrency) {
-							await appSettings.setActiveCurrency(e.target.value);
+						const target = e.target as HTMLSelectElement;
+						if (target && target.value !== appSettings.activeCurrency?.code) {
+							await appSettings.setActiveCurrency(target.value);
 						}
 					}}
 					aria-label="Select currency"
@@ -100,15 +105,7 @@
 									>Orders</a
 								>
 								<div class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-									<button class="btn flex w-full items-center justify-center" onclick={logout}>
-										{#if loggingOut}
-											<iconify-icon icon="eos-icons:loading" width="16" height="16"></iconify-icon>
-										{:else}
-											<iconify-icon icon="material-symbols:logout" width="16" height="16"
-											></iconify-icon>
-										{/if}
-										<span class="ml-2">Logout</span>
-									</button>
+									<LogoutButton />
 								</div>
 							</div>
 						{/if}

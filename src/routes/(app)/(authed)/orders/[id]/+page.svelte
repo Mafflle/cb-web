@@ -7,6 +7,7 @@
 
 	import orders from '$lib/stores/orders.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
+	import { showToast } from '../../../../../lib/utils/toaster.svelte';
 
 	const orderId = page.params.id;
 	let loading = $state(false);
@@ -42,6 +43,10 @@
 		try {
 			await orders.pay(orderId, 'naira');
 		} catch (error) {
+			showToast({
+				message: 'Error processing payment. Please try again.',
+				type: 'error'
+			});
 			console.error('Error processing payment:', error);
 		}
 	};

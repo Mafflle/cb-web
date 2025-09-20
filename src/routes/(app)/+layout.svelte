@@ -4,6 +4,7 @@
 	import cart from '$lib/stores/cart.svelte';
 	import orders from '$lib/stores/orders.svelte';
 	import { browser } from '$app/environment';
+	import auth from '$lib/stores/auth.svelte';
 
 	let { children } = $props();
 
@@ -14,7 +15,7 @@
 	});
 
 	$effect(() => {
-		if (browser && !orders.loaded) {
+		if (browser && auth.currentUser && !orders.loaded) {
 			orders.load();
 		}
 	});

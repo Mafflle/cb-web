@@ -10,17 +10,21 @@
 	import orders from '$lib/stores/orders.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
 
-	let { children } = $props();
+	let { data, children } = $props()
+  	let { session, supabase } = $derived(data)	
 
 	onMount(async () => {
 		if (browser && !auth.loaded) {
-			await auth.load();
+			await auth.load(supabase, session);
 			await cart.load();
 		}
 
 		if (auth.currentUser) {
 			await orders.load();
 		}
+
+		return (() => auth.cleanup()) as never
+		
 	});
 
 	$effect(() => {
