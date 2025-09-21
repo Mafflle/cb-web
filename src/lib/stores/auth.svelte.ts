@@ -36,7 +36,6 @@ const createStore = () => {
 			}
 	
 			const {data} = supabase.auth.onAuthStateChange(async (_event: string, newSession: Session | null) => {
-				console.log("Auth state changed:", _event, newSession);
 				session = newSession;
 
 				if (browser) {
@@ -66,6 +65,22 @@ const createStore = () => {
 		}
 	}
 
+	const waitForAuth = async (timeout: number) => {
+		if (!loaded) {
+			const start = Date.now();
+			while (!loaded) {
+				if (Date.now() - start > timeout) {
+					return false;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+
+			return true;
+		} 
+
+		return true;
+	};
+
 	return {
 		get currentUser() {
 			return currentUser;
@@ -73,10 +88,14 @@ const createStore = () => {
 		get loaded() {
 			return loaded;
 		},
+		get supabase() {
+			return supabase;
+		},
 		load,
 		refresh,
 		logout,
-		cleanup
+		cleanup,
+		waitForAuth
 	};
 };
 

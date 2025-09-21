@@ -1,9 +1,9 @@
 <script lang="ts">
 	import cart from '$lib/stores/cart.svelte';
 	import auth from '$lib/stores/auth.svelte';
-	import appSettings from '$lib/stores/appSettings.svelte';
 	import { clickOutside } from '$lib/utils/clickoutside.svelte';
 	import LogoutButton from './LogoutButton.svelte';
+	import { goto } from '$app/navigation';
 
 	let { authNav = false }: { authNav?: boolean } = $props();
 
@@ -12,62 +12,27 @@
 	const toggleDropdown = () => {
 		dropdownOpen = !dropdownOpen;
 	};
-
-	let loggingOut = $state(false);
-	let currencyKeys = $derived(Object.keys(appSettings.currencies));
-
-	const handleLogout = async () => {
-		
-			loggingOut = true;
-			await auth.logout();
-			loggingOut = false;
-			dropdownOpen = false;
-
-	};
 </script>
 
-<div class="bg-background sticky top-0 z-50 w-screen border-b border-gray-200 px-5 lg:px-10">
-	<nav class="container mx-auto flex items-center justify-between py-4">
+<div class="bg-background sticky top-0 z-50 w-screen border-b rounded-b-[40px] shadow border-gray-200 px-[16px] pb-[16px] pt-[8px] space-y-[20px]">
+	<nav class="container mx-auto flex items-center justify-between">
 		<div>
 			<a href="/" class="">
 				<img
-					src="/images/logo.svg"
+					src="/images/logo-primary.svg"
 					alt="ChowBenin Logo"
-					class=" w-28"
+					class="w-[51px]"
 					loading="lazy"
 					width="100"
 					height="40"
 				/>
-				<small class="ml-0.5 text-xs">Good Food, Fast 🇧🇯</small>
 			</a>
 		</div>
 
 		{#if !authNav}
-			<div class="bg-surface flex items-center gap-4 rounded-md p-2 shadow-sm">
-				<!-- Currency select dropdown -->
-				<select
-					class="bg-surface text-text-body focus:outline-none"
-					onchange={async (e) => {
-						const target = e.target as HTMLSelectElement;
-						if (target && target.value !== appSettings.activeCurrency?.code) {
-							await appSettings.setActiveCurrency(target.value);
-						}
-					}}
-					aria-label="Select currency"
-				>
-					{#each currencyKeys as key, index (index)}
-						<option
-							value={key}
-							class="bg-surface text-text-body"
-							selected={key === appSettings.activeCurrency?.code}
-						>
-							{appSettings.currencies[key].code}
-						</option>
-					{/each}
-				</select>
-
-				<a href="/carts" aria-label="Cart" class="relative flex items-center justify-center">
-					<iconify-icon icon="solar:cart-3-outline" width="25" height="25"></iconify-icon>
+			<div class=" flex items-center gap-[12px] p-2">
+				<a href="/carts" aria-label="Cart" class="relative flex items-center justify-center rounded-full p-[10px] bg-[#f2f2f2]">
+					<img src="/icons/basket.svg" alt="Cart" width="20" height="20" loading="lazy" />
 
 					{#if cart.cartCounts > 0}
 						<span
@@ -77,43 +42,52 @@
 						</span>
 					{/if}
 				</a>
-				{#if auth.currentUser}
-					<!-- Avatar Icon with dropdown -->
-					<div class="relative">
-						<button
-							onclick={toggleDropdown}
-							class="flex items-center justify-center rounded-full hover:bg-gray-100 focus:outline-none"
-							aria-haspopup="true"
-							aria-expanded={dropdownOpen}
-							aria-label="User menu"
+				<div class="relative">
+					<button
+						onclick={auth.currentUser ? toggleDropdown : async () => await goto('/auth/login')}
+						class="p-[10px] rounded-full bg-[#f2f2f2]"
+						aria-haspopup="true"
+						aria-expanded={dropdownOpen}
+						aria-label="User menu"
+					>
+						<img
+							src='/icons/user.svg'
+							alt=""
+							loading="lazy"
+							width="20"
+							height="20"
+						/>
+					</button>
+					{#if dropdownOpen}
+						<div
+							class=" absolute right-0 z-10 mt-2 w-48 rounded-md bg-white shadow-lg focus:outline-none"
+							role="menu"
+							aria-orientation="vertical"
+							aria-labelledby="user-menu"
+							use:clickOutside
+							onclickoutside={() => (dropdownOpen = false)}
 						>
-							<iconify-icon icon="qlementine-icons:user-24" width="24" height="24"></iconify-icon>
-						</button>
-						{#if dropdownOpen}
-							<div
-								class=" absolute right-0 z-10 mt-2 w-48 rounded-md bg-white shadow-lg focus:outline-none"
-								role="menu"
-								aria-orientation="vertical"
-								aria-labelledby="user-menu"
-								use:clickOutside
-								onclickoutside={() => (dropdownOpen = false)}
+							<a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+								>Profile</a
 							>
-								<a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-									>Profile</a
-								>
-								<a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-									>Orders</a
-								>
-								<div class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-									<LogoutButton />
-								</div>
+							<a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+								>Orders</a
+							>
+							<div class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+								<LogoutButton />
 							</div>
-						{/if}
-					</div>
-				{:else}
-					<a href="/auth/login" class="btn px-2 py-1">Login</a>
-				{/if}
+						</div>
+					{/if}
+				</div>
+				
 			</div>
 		{/if}
 	</nav>
+
+	<div>
+		<div class="form-input-icon bg-[#fafafa] group">
+			<img src="/icons/search.svg" alt="Search" class="icon" width="20" height="20" loading="lazy">
+			<input type="text" placeholder="Search..." class="form-input" />
+		</div>
+	</div>
 </div>

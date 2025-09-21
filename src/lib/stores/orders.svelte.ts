@@ -1,13 +1,7 @@
-import supabase from "../supabase";
-
-// import paystackService from "$lib/services/paystack";
 import { showToast } from "$lib/utils/toaster.svelte";
 import { goto } from "$app/navigation";
-// import type { Tables } from "$lib/types/database.types";
 import auth from "$lib/stores/auth.svelte";
 import cart from "$lib/stores/cart.svelte";
-// import appSettings from "$lib/stores/appSettings.svelte";
-// import { browser } from "$app/environment";
 
 interface OrderInput {
 	restaurantId: string;
@@ -26,9 +20,10 @@ const createStore = () => {
 	let loadLocked = $state(false);
 	let loading = $state(false);
 	let loaded = $state(false);
+	const supabase = $derived.by(() => auth.supabase);
 
 	const placeOrder = async (order: OrderInput) => {
-		if (!auth.currentUser) {
+		if (!auth.currentUser || !supabase) {
 			throw new Error("User not authenticated");
 		}
 
@@ -67,7 +62,7 @@ const createStore = () => {
 	};
 
 	const getOrderDetails = async (orderId: string) => {
-		if (!auth.currentUser) {
+		if (!auth.currentUser || !supabase) {
 			throw new Error("User not authenticated");
 		}
 
@@ -184,7 +179,7 @@ const createStore = () => {
 	};
 
 	const getOrders = async () => {
-		if (!auth.currentUser) {
+		if (!auth.currentUser || !supabase) {
 			throw new Error("User not authenticated");
 		}
 
@@ -212,7 +207,7 @@ const createStore = () => {
 		loadLocked = true;
 		loading = true;
 
-		if (!auth.currentUser) {
+		if (!auth.currentUser || !supabase) {
 				loading = false;
 				loadLocked = false;
 				loaded = true;

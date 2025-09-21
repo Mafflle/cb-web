@@ -1,8 +1,14 @@
 import { browser } from '$app/environment';
-import restaurant from '$lib/stores/restaurant.svelte';
+import type { Tables } from '../types/database.types';
+
+export type Cart = {
+		restaurantDetails: Tables<'restaurant'> | null,
+		items: (Tables<'items'> & { quantity: number })[],
+		total: number
+	}
 
 const createStore = () => {
-	let carts = $state<any>({});
+	let carts = $state<{[restaurantId: string]: Cart}>({});
 	let loaded = $state(false);
 	let loadLocked = $state(false);
 	const keys = $derived.by(() => Object.keys(carts));
@@ -28,6 +34,7 @@ const createStore = () => {
 			const storedCarts = localStorage.getItem('carts');
 			if (storedCarts) {
 				carts = JSON.parse(storedCarts);
+				console.log('Carts loaded from localStorage:', carts);
 			}
 		}
 
@@ -35,16 +42,16 @@ const createStore = () => {
 		loadLocked = false;
 	};
 
-	const addItem = async (restaurantId: string, item: any, quantity: number = 1) => {
-		if (!carts[restaurantId]) {
-			carts[restaurantId] = {
-				restaurantDetails: await restaurant.getById(restaurantId),
+	const addItem = async (restaurant: Tables<'restaurant'>, item: any, quantity: number = 1) => {
+		if (!carts[restaurant.id]) {
+			carts[restaurant.id] = {
+				restaurantDetails: restaurant,
 				items: [],
 				total: 0
 			};
 		}
 
-		const cart = carts[restaurantId];
+		const cart = carts[restaurant.id];
 		const existingItem = cart.items.find((i: any) => i.id === item.id);
 
 		if (existingItem) {
@@ -54,7 +61,7 @@ const createStore = () => {
 		}
 
 		cart.total += (item.discount_price || item.price) * quantity;
-		carts[restaurantId] = cart;
+		carts[restaurant.id] = cart;
 		persistCarts();
 	};
 

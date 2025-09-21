@@ -1,42 +1,47 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import RestaurantCard from '$lib/components/RestaurantCard.svelte';
-	import restaurant from '$lib/stores/restaurant.svelte';
-	import Seo from '../../lib/components/Seo.svelte';
+	import Seo from '$lib/components/Seo.svelte';
+	import type { PageProps } from './$types';
+	import { showToast } from '$lib/utils/toaster.svelte';
+	import restaurantRepository from '$lib/repositories/restaurant.repository';
 
-	$effect(() => {
-		if (browser && !restaurant.loaded) {
-			restaurant.load();
-		}
-	});
+	const { data }: PageProps = $props();
+
+	let {restaurant: restaurantData, supabase} = $derived(data);
 
 	// Debounce function for search input
 	function debounce(func: (...args: any[]) => void, delay: number) {
 		let timeout: NodeJS.Timeout;
-		return function (...args: any[]) {
+		return (...args: any[]) => {
 			clearTimeout(timeout);
-			timeout = setTimeout(() => func.apply(this, args), delay);
+			timeout = setTimeout(() => func(...args), delay);
 		};
 	}
 
-	// Function to handle search input
-	function handleSearch(event: Event) {
+	const handleSearch = async (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const searchTerm = input.value.toLowerCase();
 
-		restaurant.search(searchTerm);
+		try {
+			restaurantData = await restaurantRepository.search(supabase, searchTerm);
+		} catch (e) {
+			restaurantData = [];
+			showToast({
+				message: 'Error searching restaurants, please try again.',
+				type: 'error'
+			})
+			console.error('Error searching restaurants:', e);
+		}
 	}
 
 	// Debounced search function
 	const debouncedSearch = debounce(handleSearch, 400);
-
-	// $effect(() => console.log('Keys', restaurant.keys));
 </script>
 
 <Seo />
 
 <main class="space-y-8">
-	<div class="items-center justify-between space-y-3 md:flex md:space-y-0">
+	<!-- <div class="items-center justify-between space-y-3 md:flex md:space-y-0">
 		<div>
 			<h3 class="text-2xl font-bold">Restaurants</h3>
 		</div>
@@ -51,23 +56,18 @@
 				oninput={debouncedSearch}
 			/>
 		</div>
-	</div>
+	</div> -->
 
-	{#if restaurant.loading}
-		<div class="flex h-[200px] items-center justify-center">
-			<iconify-icon icon="eos-icons:loading" width="40" height="40" class=" text-[#3333338C]"
-			></iconify-icon>
-		</div>
-	{:else if restaurant.loaded && restaurant.keys.length === 0}
+	{#if restaurantData?.length === 0}
 		<div class="flex h-[200px] items-center justify-center">
 			<p class="text-lg font-bold text-[#3333338C]">No restaurants found</p>
 		</div>
-	{:else if restaurant.loaded && restaurant.keys.length > 0}
+	{:else if (restaurantData && restaurantData?.length > 0)}
 		<div
 			class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-x-[10px] lg:grid-cols-4 lg:gap-x-[16px]"
 		>
-			{#each restaurant.keys as key (key)}
-				<RestaurantCard details={restaurant.restaurants[key]} />
+			{#each restaurantData as restaurant (restaurant.id)}
+				<RestaurantCard details={restaurant} />
 			{/each}
 		</div>
 	{/if}

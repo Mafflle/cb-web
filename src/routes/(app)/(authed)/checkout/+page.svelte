@@ -10,8 +10,13 @@
 	import PhoneInput from '$lib/components/forms/PhoneInput.svelte';
 
 	import cart from '$lib/stores/cart.svelte';
-	import orders from '$lib/stores/orders.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
+	import ordersRepository from '$lib/repositories/orders.repository';
+	import type { PageProps } from './$types';
+
+	const { data }: PageProps = $props();
+
+	let { supabase, session } = $derived(data);
 
 	const orderChargeDetails = $state({
 		deliveryFee: 700,
@@ -26,8 +31,6 @@
 		address: null,
 		phoneCode: null,
 		phone: null,
-		whatsappCode: null,
-		whatsapp: null,
 		specialInstructions: null
 	});
 
@@ -66,23 +69,6 @@
 					return z.NEVER;
 				}
 			}),
-		whatsappCode: z.enum(Object.keys(supportedCountries) as [string, ...string[]], {
-			errorMap: () => ({ message: 'Invalid country code' })
-		}),
-		whatsapp: z.string().superRefine((val, ctx) => {
-			if (
-				val.trim().length < supportedCountries[deliveryDetails.whatsappCode].maxlength ||
-				val.trim().length > supportedCountries[deliveryDetails.whatsappCode].maxlength
-			) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: `Phone number must be ${supportedCountries[deliveryDetails.whatsappCode].maxlength} digits.`,
-					fatal: true
-				});
-
-				return z.NEVER;
-			}
-		}),
 		specialInstructions: z.string().optional()
 	});
 
@@ -114,17 +100,14 @@
 			address: null,
 			phoneCode: null,
 			phone: null,
-			whatsappCode: null,
-			whatsapp: null,
 			specialInstructions: null
 		};
 
 		try {
-			const { phoneCode, whatsappCode, ...parsedData } = schema.parse(deliveryDetails);
+			const { phoneCode, ...parsedData } = schema.parse(deliveryDetails);
 			const dataToSend = {
 				...parsedData,
 				phone: `${phoneCode}${parsedData.phone.replace(/\D/g, '')}`,
-				whatsapp: `${whatsappCode}${parsedData.whatsapp.replace(/\D/g, '')}`,
 				restaurantId: restaurantId as string,
 				items: cartDetails.items.map((item: any) => ({
 					id: item.id,
@@ -132,7 +115,8 @@
 					price: item.discount_price || item.price
 				}))
 			};
-			let order = await orders.placeOrder(dataToSend);
+			let order = await ordersRepository.placeOrder(supabase, dataToSend, session?.user.id as string);
+			cart.deleteCart(restaurantId as string);
 			showToast({ message: 'Order placed successfully', type: 'success' });
 			if (order?.payment_status === 'pending') {
 				showToast({
@@ -217,22 +201,6 @@
 					{/if}
 					<p class="mt-2 text-sm text-gray-500">
 						The delivery person will contact you on this number.
-					</p>
-				</div>
-				<div class="mt-4">
-					<label for="whatsapp" class="block text-sm font-medium text-gray-700">WhatsApp</label>
-					<PhoneInput
-						bind:countryCode={deliveryDetails.whatsappCode}
-						bind:phoneNumber={deliveryDetails.whatsapp}
-						error={errors.whatsapp}
-					/>
-					{#if errors.whatsapp}
-						{#each errors.whatsapp as error, index (index)}
-							<p class="mt-2 text-sm text-red-600">{error}</p>
-						{/each}
-					{/if}
-					<p class="mt-2 text-sm text-gray-500">
-						We will send you updates about your order on WhatsApp.
 					</p>
 				</div>
 

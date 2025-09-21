@@ -2,15 +2,27 @@
 @import '@fontsource/nunito';
 
 @theme {
-	--color-primary: #ff7a00; /* Warm Orange - main action color */
+
+	--color-orange-50: #fcf1e8;
+	--color-orange-100: #f5d2b9;
+	--color-orange-200: #f0bc97;
+	--color-orange-300: #ea9e68;
+	--color-orange-400: #e58b4a;
+	--color-orange-500: #df6e1d;
+	--color-orange-600: #cb641a;
+	--color-orange-700: #9e4e15;
+	--color-orange-800: #7b3d10;
+	--color-orange-900: #5e2e0c;
+
+	--color-primary: #ff7a00; 
 	--color-primary-dark: #e06b00; /* Slightly darker orange for hover states */
 
-	--color-background: #fff7e8; /* Warm Cream - website background */
+	--color-background: #ffffff; /* Warm Cream - website background */
 	--color-surface: #ffffff; /* For cards, secondary backgrounds if needed */
 
 	--color-text-heading: #543520; /* Deep Brown - for headings */
-	--color-text-body: #3b3028; /* Darker brown - for paragraph text */
-	--color-border: #e0d3c2; /* Light beige for subtle borders/dividers */
+	--color-text-body: #1E1E1E;
+	--color-border: #EAEAEA; /* Light beige for subtle borders/dividers */
 
 	/* Accent Colors */
 	--color-accent-green: #00c853; /* Fresh Green - secondary accents */
@@ -77,13 +89,10 @@
 
 	/* Form inputs with icon */
 	.form-input-icon {
-		@apply relative;
+		@apply relative flex items-center bg-surface ring-border ring gap-[8px] px-[20px] h-[52px] rounded-full;
 	}
 	.form-input-icon input {
-		@apply pl-10;
-	}
-	.form-input-icon .icon {
-		@apply absolute top-1/2 left-2 -translate-y-1/2 transform text-gray-500;
+		@apply ring-0 bg-inherit;
 	}
 
 	/* Form phone input (with select and input) */

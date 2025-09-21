@@ -1,0 +1,3 @@
+ALTER TABLE items
+    ALTER COLUMN price SET NOT NULL,
+    ALTER COLUMN restaurant_id SET NOT NULL;

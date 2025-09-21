@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { page, updated } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
@@ -7,24 +7,30 @@
 
 	import orders from '$lib/stores/orders.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
-	import { showToast } from '../../../../../lib/utils/toaster.svelte';
+	import { showToast } from '$lib/utils/toaster.svelte';
+	import type { PageProps } from '../$types';
+	import ordersRepository from '../../../../../lib/repositories/orders.repository';
+	import type { RealtimeChannel } from '@supabase/supabase-js';
 
-	const orderId = page.params.id;
-	let loading = $state(false);
-	let order = $derived.by(() => {
-		return orders.orders[orderId] || null;
+	
+	const { data }: PageProps = $props();
+
+	let { order, supabase } = $derived(data);
+
+	let orderSub: RealtimeChannel;
+	
+	onMount(() => {
+		ordersRepository.subscribeToOrderChanges(supabase, order.id, (updatedOrder) => {
+			if (updatedOrder) {
+				order = updatedOrder;
+			}
+		}).then(sub => orderSub = sub);
+
+		return () => {
+			orderSub?.unsubscribe();
+		};
 	});
 
-	onMount(async () => {
-		loading = true;
-		if (!orders.loaded) {
-			await orders.load();
-		}
-		if (!order) {
-			goto('/orders');
-		}
-		loading = false;
-	});
 
 	const progressMap: any = {
 		confirmed: 1,
@@ -41,7 +47,7 @@
 
 	const handlePayWithNaira = async () => {
 		try {
-			await orders.pay(orderId, 'naira');
+			await orders.pay(order.id, 'naira');
 		} catch (error) {
 			showToast({
 				message: 'Error processing payment. Please try again.',
@@ -61,11 +67,7 @@
     - Payment Buttons (Pay with Naira, Pay with Momo (Coming Soon))
     -->
 
-	{#if loading}
-		<div class="flex h-screen items-center justify-center">
-			<iconify-icon icon="eos-icons:loading" width="32" height="32"></iconify-icon>
-		</div>
-	{:else if order}
+	{#if order}
 		<Breadcrumb text="Back to Orders" href="/orders" />
 		<div class="bg-surface border-border flex flex-col gap-4 rounded-lg border p-4 shadow-md">
 			<div class="">
@@ -194,12 +196,11 @@
 		<!-- Order Details -->
 		<div class="bg-surface border-border flex flex-col gap-4 rounded-lg border p-4 shadow-md">
 			<h2 class="text-lg font-bold">Order Details</h2>
-			<!-- Name, Address, Phone Number, WhatsApp Number, Special Instructions -->
+			<!-- Name, Address, Phone Number, Special Instructions -->
 			<ul class="mt-1 space-y-1 text-sm">
 				<li class="font-semibold">Name: {order.name}</li>
 				<li class="font-semibold">Address: {order.address}</li>
 				<li class="font-semibold">Phone Number: {order.phone}</li>
-				<li class="font-semibold">WhatsApp Number: {order.whatsapp}</li>
 
 				{#if order.special_instructions}
 					<li class="font-semibold">

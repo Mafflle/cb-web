@@ -2,8 +2,10 @@
 	import { browser } from '$app/environment';
 	import cart from '$lib/stores/cart.svelte';
 	import Seo from '$lib/components/Seo.svelte';
+	import { onMount } from 'svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
 
-	$effect(() => {
+	onMount(() => {
 		if (browser && !cart.loaded) {
 			cart.load();
 		}
@@ -44,9 +46,9 @@
 										<div class="relative">
 											<p>
 												<!-- Calculated Price: -->
-												XOF {item.discount_price
+												{appSettings.formatPrice(item.discount_price
 													? item.discount_price * item.quantity
-													: item.price * item.quantity}
+													: item.price * item.quantity)}
 											</p>
 										</div>
 									</li>
@@ -58,8 +60,7 @@
 						<div class="flex items-center justify-between">
 							<span class=" font-semibold">Total:</span>
 							<span class="font-semibold">
-								XOF
-								{cart.carts[key].total}
+								{appSettings.formatPrice(cart.carts[key].total)}
 							</span>
 						</div>
 						<div>

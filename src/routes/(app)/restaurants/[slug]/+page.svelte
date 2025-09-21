@@ -1,64 +1,23 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import supabase from '$lib/supabase';
-	import restaurantStore from '$lib/stores/restaurant.svelte';
-	import cart from '$lib/stores/cart.svelte';
-	import { goto } from '$app/navigation';
-	import Seo from '../../../../lib/components/Seo.svelte';
-	import Breadcrumb from '../../../../lib/components/Breadcrumb.svelte';
+	import type { PageProps } from './$types';
+	
+	import cartStore, { type Cart } from '$lib/stores/cart.svelte';
+	import Seo from '$lib/components/Seo.svelte';
+	import Breadcrumb from '$lib/components/Breadcrumb.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
+	import MenuItemCard from '$lib/components/MenuItemCard.svelte';
 
-	let loading = $state(true);
-	let menuItems = $state<null | any[]>(null);
-	let restaurant = $state<null | any>(null);
+	let {data}: PageProps = $props();
 
-	let slug = page.params.slug;
-
-	// Fetch restaurant details based on the slug
-	const fetchRestaurantDetails = async () => {
-		restaurant = await restaurantStore.getBySlug(slug);
-
-		if (!restaurant) {
-			goto('/404');
-		}
-	};
-
-	// Fetch menu items for the restaurant
-	const fetchMenuItems = async () => {
-		if (!restaurant || !restaurant.id) {
-			console.error('Restaurant ID is not available');
-			return;
-		}
-
-		const { data, error } = await supabase
-			.from('items')
-			.select('id, name, description, image, price, discount_price')
-			.eq('restaurant_id', restaurant.id);
-
-		if (error) {
-			console.error('Error fetching menu items:', error);
-			return;
-		}
-
-		menuItems = data;
-	};
-
-	let cartItems = $state<any[]>([]);
-
-	$effect(() => {
-		if (restaurant) {
-			const carts = cart.carts;
-			const restaurantCart = carts[restaurant.id];
-			cartItems = restaurantCart ? restaurantCart.items : [];
-		}
-	});
+	let {restaurant} = $derived(data);
+	let cart = $derived<Cart | null>(cartStore.carts[restaurant?.id as string] ?? null);
+	let cartItems = $derived(cart ? cart.items : []);
 
 	onMount(async () => {
-		loading = true;
-		await fetchRestaurantDetails();
-		await fetchMenuItems();
-		loading = false;
+		if (!cartStore.loaded) {
+			await cartStore.load();
+		}
 	});
 </script>
 
@@ -69,16 +28,7 @@
 		: 'Restaurant details - ChowBenin'}
 />
 
-{#if loading}
-	<div class="flex h-screen items-center justify-center">
-		<iconify-icon icon="eos-icons:loading" width="40" height="40" class=" text-[#3333338C]"
-		></iconify-icon>
-	</div>
-{:else if !restaurant}
-	<div class="flex h-screen items-center justify-center">
-		<p class="text-lg font-bold text-[#3333338C]">Restaurant not found</p>
-	</div>
-{:else}
+{#if restaurant}
 	<main class="relative">
 		<header class="relative">
 			<!-- Breadcrumb (back button) -->
@@ -137,72 +87,17 @@
 			</div>
 
 			<div class="mt-6">
-				{#if menuItems && menuItems.length > 0}
+				{#if (restaurant && restaurant.items && restaurant.items.length > 0)}
 					<div
 						class="grid grid-cols-1 gap-x-[8px] gap-y-5 md:grid-cols-2 md:gap-x-[10px] lg:grid-cols-3 lg:gap-x-[16px]"
 					>
-						{#each menuItems as item, index (index)}
-							<div
-								class="border-border bg-surface rounded-lg border p-4 shadow-md transition-all hover:shadow-lg"
-							>
-								<div class="relative mb-4 h-[200px] overflow-hidden rounded-lg">
-									<img
-										src={item.image}
-										alt="Dish {index + 2}"
-										class="mb-4 h-full w-full rounded-lg object-cover"
-									/>
-									{#if item.discount_price}
-										<span
-											class="bg-accent-green absolute top-2 right-2 rounded px-2 py-1 text-xs font-bold text-white"
-										>
-											-{Math.round(((item.price - item.discount_price) / item.price) * 100)}%
-										</span>
-									{/if}
-								</div>
-
-								<div>
-									<h3 class="text-lg font-bold">{item.name}</h3>
-									<p class="line-clamp-3 text-gray-600">{item.description}</p>
-								</div>
-
-								<!-- Buttons to increase/decrease quantity and add to cart -->
-
-								<div class="mt-4 flex items-center justify-between">
-									<p class="text-text-heading text-sm font-bold">
-										{#if item.discount_price}
-											<span class=" line-through">{appSettings.formatPrice(item.price)}</span><br />
-											<span class="">{appSettings.formatPrice(item.discount_price)}</span>
-										{:else}
-											{appSettings.formatPrice(item.price)}
-										{/if}
-									</p>
-									{#if cartItems.find((i) => i.id === item.id)}
-										<div class="flex items-center gap-2">
-											<button
-												aria-label="Remove from cart"
-												class="bg-primary hover:bg-primary rounded px-2 py-1 text-white"
-												onclick={() => cart.removeItem(restaurant.id, item.id)}
-											>
-												-
-											</button>
-											<span class="text-lg font-bold"
-												>{cartItems.find((i) => i.id === item.id).quantity}</span
-											>
-											<button
-												aria-label="Add to cart"
-												class="bg-primary hover:bg-primary rounded px-2 py-1 text-white"
-												onclick={() => cart.addItem(restaurant.id, item)}
-											>
-												+
-											</button>
-										</div>
-									{:else}
-										<button class="btn" onclick={() => cart.addItem(restaurant.id, item)}>
-											Add to Cart
-										</button>
-									{/if}
-								</div>
-							</div>
+						{#each restaurant.items as item, index (index)}
+							<MenuItemCard
+								{item}
+								{index}
+								{restaurant}
+								{cartItems}
+							/>
 						{/each}
 					</div>
 				{:else}
@@ -216,7 +111,7 @@
 			</div>
 		</section>
 
-		{#if cart.carts[restaurant.id] && cartItems.length > 0}
+		{#if cartStore.carts[restaurant.id] && cartItems.length > 0}
 			<div
 				class="bg-background border-border shadow-t-lg fixed right-0 bottom-0 left-0 z-50 border-t-2 p-4"
 			>
@@ -232,7 +127,7 @@
 				<div class="flex flex-col">
 					<p class=" font-bold">
 						Total:
-						{appSettings.formatPrice(cart.carts[restaurant.id].total)}
+						{appSettings.formatPrice(cartStore.carts[restaurant.id].total)}
 					</p>
 					<p class="text-sm text-gray-600">
 						{cartItems.length} item{cartItems.length > 1 ? 's' : ''} in cart
@@ -244,7 +139,7 @@
 					<button
 						onclick={(event) => {
 							event.preventDefault();
-							cart.deleteCart(restaurant.id);
+							cartStore.deleteCart(restaurant?.id as string);
 						}}
 						class="link hover:text-primary mt-2 block w-full text-center text-sm"
 					>

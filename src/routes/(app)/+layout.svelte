@@ -2,7 +2,6 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import cart from '$lib/stores/cart.svelte';
-	import orders from '$lib/stores/orders.svelte';
 	import { browser } from '$app/environment';
 	import auth from '$lib/stores/auth.svelte';
 
@@ -11,12 +10,6 @@
 	$effect(() => {
 		if (browser && !cart.loaded) {
 			cart.load();
-		}
-	});
-
-	$effect(() => {
-		if (browser && auth.currentUser && !orders.loaded) {
-			orders.load();
 		}
 	});
 </script>

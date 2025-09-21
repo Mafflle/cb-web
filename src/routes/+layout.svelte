@@ -7,7 +7,6 @@
 
 	import auth from '$lib/stores/auth.svelte';
 	import cart from '$lib/stores/cart.svelte';
-	import orders from '$lib/stores/orders.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
 
 	let { data, children } = $props()
@@ -17,10 +16,6 @@
 		if (browser && !auth.loaded) {
 			await auth.load(supabase, session);
 			await cart.load();
-		}
-
-		if (auth.currentUser) {
-			await orders.load();
 		}
 
 		return (() => auth.cleanup()) as never

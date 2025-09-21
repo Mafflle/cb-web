@@ -97,8 +97,8 @@ export type Database = {
           image: string
           menu_category_id: string | null
           name: string
-          price: number | null
-          restaurant_id: string | null
+          price: number
+          restaurant_id: string
           updated_at: string | null
         }
         Insert: {
@@ -109,8 +109,8 @@ export type Database = {
           image: string
           menu_category_id?: string | null
           name: string
-          price?: number | null
-          restaurant_id?: string | null
+          price: number
+          restaurant_id: string
           updated_at?: string | null
         }
         Update: {
@@ -121,8 +121,8 @@ export type Database = {
           image?: string
           menu_category_id?: string | null
           name?: string
-          price?: number | null
-          restaurant_id?: string | null
+          price?: number
+          restaurant_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -224,11 +224,10 @@ export type Database = {
           phone: string
           restaurant_id: string
           service_charge: number
-          special_instructions: string
+          special_instructions: string | null
           total: number
           total_price: number
           user_id: string
-          whatsapp: string
         }
         Insert: {
           address: string
@@ -242,11 +241,10 @@ export type Database = {
           phone: string
           restaurant_id: string
           service_charge: number
-          special_instructions: string
+          special_instructions?: string | null
           total?: number
           total_price: number
           user_id: string
-          whatsapp: string
         }
         Update: {
           address?: string
@@ -260,11 +258,10 @@ export type Database = {
           phone?: string
           restaurant_id?: string
           service_charge?: number
-          special_instructions?: string
+          special_instructions?: string | null
           total?: number
           total_price?: number
           user_id?: string
-          whatsapp?: string
         }
         Relationships: [
           {
@@ -325,6 +322,7 @@ export type Database = {
           description: string
           id: string
           is_active: boolean
+          is_featured: boolean | null
           logo: string
           name: string
           phone_no: string
@@ -339,6 +337,7 @@ export type Database = {
           description: string
           id?: string
           is_active?: boolean
+          is_featured?: boolean | null
           logo: string
           name: string
           phone_no: string
@@ -353,6 +352,7 @@ export type Database = {
           description?: string
           id?: string
           is_active?: boolean
+          is_featured?: boolean | null
           logo?: string
           name?: string
           phone_no?: string

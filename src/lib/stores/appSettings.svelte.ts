@@ -159,36 +159,19 @@ const createStore = () => {
     }
   }
 
-  const formatPrice = (price: number, currency?: string) => {
-    if (!activeCurrency) {
-      getActiveCurrency();
-      if (!activeCurrency) {
-        console.error('No active currency found');
-        return price;
-      }
-    }
-
-    if (!currency) {
-      currency = activeCurrency.code;
-    }
-
-    const selectedCurrency = currencies[currency];
-
-    const convertedPrice = getConvertedPrice(price, currency);
-
-    const formattedPrice = new Intl.NumberFormat('en-US', {
+  const formatPrice = (price: number) => {
+    const formattedPrice = new Intl.NumberFormat('fr-BJ', {
       style: 'currency',
-      currency: selectedCurrency.code,
+      currency: "XOF",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
       currencySign: 'accounting',
       currencyDisplay: 'code',
       compactDisplay: 'short',
-      
-    }).format(convertedPrice).replace(selectedCurrency.code, selectedCurrency.symbol);
+
+    }).format(price).replace("XOF", "CFA");
 
     return formattedPrice;
-
   }
 
 
