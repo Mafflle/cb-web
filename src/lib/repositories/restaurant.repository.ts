@@ -1,14 +1,25 @@
 import { type SupabaseClient } from "@supabase/supabase-js";
-import type { Tables } from "../types/database.types";
+import type { Restaurant, RestaurantWithItems } from "../types/restaurants.types";
+import type { Database } from "../types/database.types";
 
-type Restaurant = Tables<"restaurant">;
-type RestaurantWithItems = Tables<"restaurant"> & { items: Tables<"items">[] };
 
 const createRepo = () => {
-  const getAll = async (supabase: SupabaseClient): Promise<Restaurant[]> => {
+  const getAll = async (supabase: SupabaseClient<Database>): Promise<Restaurant[]> => {
     const {data, error} = await supabase
       .from('restaurant')
-      .select('*');
+      .select('*')
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  }
+
+  const getFeatured = async (supabase: SupabaseClient): Promise<Restaurant[]> => {
+    const {data, error} = await supabase
+      .from('restaurant')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .eq('is_featured', true);
 
     if (error) throw error;
     return data;
@@ -45,6 +56,7 @@ const createRepo = () => {
 
   return {
     getAll,
+    getFeatured,
     getBySlug,
     getById,
     search

@@ -3,7 +3,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import cart from '$lib/stores/cart.svelte';
 	import { browser } from '$app/environment';
-	import auth from '$lib/stores/auth.svelte';
+	import { page } from '$app/state';
 
 	let { children } = $props();
 
@@ -14,8 +14,8 @@
 	});
 </script>
 
-<Navbar />
-<div class="container mx-auto flex-1 px-5 py-5 lg:px-10">
+<Navbar showSearchButton={page.url.pathname === '/'} />
+<div class="container mx-auto flex-1 px-[16px] pt-[32px] pb-5 lg:px-10">
 	{@render children()}
 </div>
 <Footer />

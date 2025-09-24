@@ -4,8 +4,16 @@
 	import { clickOutside } from '$lib/utils/clickoutside.svelte';
 	import LogoutButton from './LogoutButton.svelte';
 	import { goto } from '$app/navigation';
+	import { debounce } from '$lib/utils/helpers';
 
-	let { authNav = false }: { authNav?: boolean } = $props();
+	let {
+		authNav = false,
+		showSearchButton = false,
+	}: {
+		authNav?: boolean;
+		showSearchButton?: boolean;
+		searchTerm?: string;
+	} = $props();
 
 	let dropdownOpen = $state(false);
 
@@ -14,7 +22,9 @@
 	};
 </script>
 
-<div class="bg-background sticky top-0 z-50 w-screen border-b rounded-b-[40px] shadow border-gray-200 px-[16px] pb-[16px] pt-[8px] space-y-[20px]">
+<div
+	class="bg-background sticky top-0 z-50 w-screen space-y-[20px] rounded-b-[40px]  px-[16px] pt-[8px] pb-[16px] {showSearchButton ? 'shadow border-gray-200 border-b' : null} "
+>
 	<nav class="container mx-auto flex items-center justify-between">
 		<div>
 			<a href="/" class="">
@@ -31,7 +41,11 @@
 
 		{#if !authNav}
 			<div class=" flex items-center gap-[12px] p-2">
-				<a href="/carts" aria-label="Cart" class="relative flex items-center justify-center rounded-full p-[10px] bg-[#f2f2f2]">
+				<a
+					href="/carts"
+					aria-label="Cart"
+					class="relative flex items-center justify-center rounded-full bg-surface p-[10px]"
+				>
 					<img src="/icons/basket.svg" alt="Cart" width="20" height="20" loading="lazy" />
 
 					{#if cart.cartCounts > 0}
@@ -45,18 +59,12 @@
 				<div class="relative">
 					<button
 						onclick={auth.currentUser ? toggleDropdown : async () => await goto('/auth/login')}
-						class="p-[10px] rounded-full bg-[#f2f2f2]"
+						class="rounded-full bg-surface p-[10px]"
 						aria-haspopup="true"
 						aria-expanded={dropdownOpen}
 						aria-label="User menu"
 					>
-						<img
-							src='/icons/user.svg'
-							alt=""
-							loading="lazy"
-							width="20"
-							height="20"
-						/>
+						<img src="/icons/user.svg" alt="" loading="lazy" width="20" height="20" />
 					</button>
 					{#if dropdownOpen}
 						<div
@@ -79,15 +87,25 @@
 						</div>
 					{/if}
 				</div>
-				
 			</div>
 		{/if}
 	</nav>
 
-	<div>
-		<div class="form-input-icon bg-[#fafafa] group">
-			<img src="/icons/search.svg" alt="Search" class="icon" width="20" height="20" loading="lazy">
-			<input type="text" placeholder="Search..." class="form-input" />
+	{#if showSearchButton}
+		<div>
+			<a href="/search" class="form-input-icon w-full flex justify-start group bg-surface border-[#eaeaea] border">
+				<img
+					src="/icons/search.svg"
+					alt="Search"
+					class="icon"
+					width="20"
+					height="20"
+					loading="lazy"
+				/>
+				<div class="form-input bg-inherit flex justify-start">
+					<span class="text-black/50">Search ChowBenin</span>
+				</div>
+			</a>
 		</div>
-	</div>
+	{/if}
 </div>

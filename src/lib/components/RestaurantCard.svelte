@@ -1,33 +1,42 @@
 <script lang="ts">
-	let { details } = $props();
+	import type { Restaurant } from '$lib/types/restaurants.types';
+	import { showToast } from '../utils/toaster.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
+
+	let { restaurant, fullWidth = false }: { restaurant: Restaurant; fullWidth?: boolean } = $props();
 </script>
 
-<a href="/restaurants/{details.slug}">
-	<div
-		class=" bg-surface border-border flex flex-col rounded-md border shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg"
-	>
-		<div class="relative h-[150px] overflow-hidden rounded-t-[5px]">
-			<img
-				src={details.cover_image}
-				alt={details.name}
-				class="h-full w-full rounded-t-[5px] object-cover transition-all duration-300 ease-in-out hover:scale-105"
-			/>
+<div class={fullWidth ? 'w-full' : 'max-w-[300px]'}>
+	<a href="/restaurants/{restaurant.slug}" class="w-full">
+		<div class="relative h-[164px] overflow-hidden rounded-[16px]">
+			<img src={restaurant.cover_image} alt={restaurant.name} class="h-full w-full object-cover" />
 		</div>
-		<div class="my-2 flex h-full flex-col space-y-1 p-2">
-			<div class="flex flex-1 items-center gap-2">
-				<!-- Logo -->
-				<img
-					src={details.logo}
-					alt={details.name}
-					class="h-[50px] w-[50px] rounded-full border-2 border-white object-cover"
-					loading="lazy"
-				/>
-				<!-- Restaurant Name -->
-				<div>
-					<h4 class=" text-lg font-semibold">{details.name}</h4>
-					<p class="text-sm text-[#3333338C]">{details.description}</p>
+	</a>
+	<div class="mt-[12px] flex items-center justify-between px-[4px]">
+		<div class="flex flex-col gap-[10px]">
+			<h4 class=" text-[16px] font-[700]">{restaurant.name}</h4>
+			<div>
+				<div class="text-text-muted flex items-center text-[14px]">
+					<img
+						src="/icons/bike.svg"
+						alt="Delivery"
+						height="18"
+						width="18"
+						class="mr-[6px] inline-block"
+					/>
+					<span>Starts {appSettings.formatPrice(restaurant.start_price)}</span>
+					<span class="mx-[6px]">•</span>
+					<!-- Format preparation_time to 30 mins -->
+					<span>
+						{restaurant.preparation_time} {restaurant.preparation_time === 1 ? 'min' : 'mins'}
+					</span>
 				</div>
 			</div>
 		</div>
+		<div>
+			<button onclick={() => showToast({ message: 'Feature coming soon!', type: 'info' })}>
+				<img src="/icons/heart.svg" alt="Favorite" height="20" width="20" />
+			</button>
+		</div>
 	</div>
-</a>
+</div>

@@ -5,8 +5,9 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({locals}) => {
   try {
-    const restaurant = await restaurantRepository.getAll(locals.supabase);
-    return { restaurant };
+    const featuredRestaurants = await restaurantRepository.getFeatured(locals.supabase);
+    const restaurants = await restaurantRepository.getAll(locals.supabase);
+    return { featuredRestaurants, restaurants };
   } catch (err) {
     console.error("Error loading restaurants:", err);
     throw error(500, 'Internal Server Error');

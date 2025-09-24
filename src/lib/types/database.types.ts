@@ -98,6 +98,7 @@ export type Database = {
           menu_category_id: string | null
           name: string
           price: number
+          quantity: number | null
           restaurant_id: string
           updated_at: string | null
         }
@@ -110,6 +111,7 @@ export type Database = {
           menu_category_id?: string | null
           name: string
           price: number
+          quantity?: number | null
           restaurant_id: string
           updated_at?: string | null
         }
@@ -122,6 +124,7 @@ export type Database = {
           menu_category_id?: string | null
           name?: string
           price?: number
+          quantity?: number | null
           restaurant_id?: string
           updated_at?: string | null
         }
@@ -326,9 +329,10 @@ export type Database = {
           logo: string
           name: string
           phone_no: string
+          preparation_time: unknown
           slug: string
+          start_price: number
           updated_at: string | null
-          whatsapp: string
         }
         Insert: {
           address: string
@@ -341,9 +345,10 @@ export type Database = {
           logo: string
           name: string
           phone_no: string
-          slug?: string
+          preparation_time: unknown
+          slug: string
+          start_price: number
           updated_at?: string | null
-          whatsapp: string
         }
         Update: {
           address?: string
@@ -356,9 +361,10 @@ export type Database = {
           logo?: string
           name?: string
           phone_no?: string
+          preparation_time?: unknown
           slug?: string
+          start_price?: number
           updated_at?: string | null
-          whatsapp?: string
         }
         Relationships: []
       }

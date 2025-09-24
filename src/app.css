@@ -1,6 +1,24 @@
 @import 'tailwindcss';
 @import '@fontsource/nunito';
 
+@font-face {
+	font-family: 'Athletic';
+	src: url('/fonts/Athletic-Regular.woff2') format('woff2'),
+		url('/fonts/Athletic-Regular.woff') format('woff');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Athletics';
+	src: url('/fonts/Athletics-Bold.woff2') format('woff2'),
+		url('/fonts/Athletics-Bold.woff') format('woff');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
 @theme {
 
 	--color-orange-50: #fcf1e8;
@@ -18,17 +36,18 @@
 	--color-primary-dark: #e06b00; /* Slightly darker orange for hover states */
 
 	--color-background: #ffffff; /* Warm Cream - website background */
-	--color-surface: #ffffff; /* For cards, secondary backgrounds if needed */
+	--color-surface: #f2f2f2; /* For cards, secondary backgrounds if needed */
 
-	--color-text-heading: #543520; /* Deep Brown - for headings */
-	--color-text-body: #1E1E1E;
+	--color-text-heading: #1e1e1e; 
+	--color-text-body: #1e1e1e;
+	--color-text-muted: #949494;
 	--color-border: #EAEAEA; /* Light beige for subtle borders/dividers */
 
 	/* Accent Colors */
 	--color-accent-green: #00c853; /* Fresh Green - secondary accents */
 	--color-accent-red: #ff6347; /* Tomato Red - errors, alerts */
 
-	--font-sans: 'Nunito', sans-serif; /* Primary font */
+	--font-sans: 'Athletics', sans-serif;
 }
 
 @layer base {
@@ -91,7 +110,7 @@
 	.form-input-icon {
 		@apply relative flex items-center bg-surface ring-border ring gap-[8px] px-[20px] h-[52px] rounded-full;
 	}
-	.form-input-icon input {
+	.form-input-icon input, .form-input-icon .form-input {
 		@apply ring-0 bg-inherit;
 	}
 
@@ -117,4 +136,13 @@
 	.form-textarea:focus {
 		@apply ring-primary outline-none;
 	}
+}
+
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
 }

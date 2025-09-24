@@ -17,21 +17,19 @@
 			await auth.load(supabase, session);
 			await cart.load();
 		}
-
+		if (browser && !appSettings.loaded) {
+			appSettings.load(supabase);
+		}
 		return (() => auth.cleanup()) as never
-		
 	});
 
 	$effect(() => {
-		if (browser && !appSettings.loaded) {
-			appSettings.load();
-		}
 	});
 </script>
 
 <Toaster richColors position="bottom-right" />
 
-{#if appSettings.loading}
+{#if (!appSettings.loaded)}
 	<div class="flex h-screen items-center justify-center">
 		<iconify-icon icon="eos-icons:loading" class=" text-primary" width="32" height="32"
 		></iconify-icon>
