@@ -23,7 +23,7 @@ export const actions: Actions = {
 		const { error } = await locals.supabase.auth.signInWithOtp({
 			phone: fullPhoneNumber,
 			options: {
-				channel: 'whatsapp'
+				channel: 'sms'
 			}
 		});
 

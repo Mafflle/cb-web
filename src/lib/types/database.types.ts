@@ -328,8 +328,9 @@ export type Database = {
           is_featured: boolean | null
           logo: string
           name: string
+          opening_hours: Json
           phone_no: string
-          preparation_time: unknown
+          preparation_time: number
           slug: string
           start_price: number
           updated_at: string | null
@@ -344,8 +345,9 @@ export type Database = {
           is_featured?: boolean | null
           logo: string
           name: string
+          opening_hours?: Json
           phone_no: string
-          preparation_time: unknown
+          preparation_time: number
           slug: string
           start_price: number
           updated_at?: string | null
@@ -360,8 +362,9 @@ export type Database = {
           is_featured?: boolean | null
           logo?: string
           name?: string
+          opening_hours?: Json
           phone_no?: string
-          preparation_time?: unknown
+          preparation_time?: number
           slug?: string
           start_price?: number
           updated_at?: string | null

@@ -2,6 +2,7 @@
 	import type { Restaurant } from '$lib/types/restaurants.types';
 	import { showToast } from '../utils/toaster.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
+	import { isRestaurantOpen } from '../utils/helpers';
 
 	let { restaurant, fullWidth = false }: { restaurant: Restaurant; fullWidth?: boolean } = $props();
 </script>
@@ -9,6 +10,16 @@
 <div class={fullWidth ? 'w-full' : 'max-w-[300px]'}>
 	<a href="/restaurants/{restaurant.slug}" class="w-full">
 		<div class="relative h-[164px] overflow-hidden rounded-[16px]">
+			{#if !isRestaurantOpen(restaurant.opening_hours)}
+				<div class="absolute z-10 flex h-full w-full items-center justify-center bg-black/70">
+					<span class="absolute font-bold left-0 top-0 rounded-[4px] bg-red-600 py-[6px] px-[12px] text-[12px] text-white rounded-br-[23px]">
+						CLOSED
+					</span>
+					<span>
+						<iconify-icon icon="mdi:store-off-outline" class="text-[32px] text-surface"></iconify-icon>
+					</span>
+				</div>
+			{/if}
 			<img src={restaurant.cover_image} alt={restaurant.name} class="h-full w-full object-cover" />
 		</div>
 	</a>
