@@ -5,6 +5,8 @@
 	import LogoutButton from './LogoutButton.svelte';
 	import { goto } from '$app/navigation';
 	import { debounce } from '$lib/utils/helpers';
+	import { onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
 
 	let {
 		authNav = false,
@@ -16,14 +18,46 @@
 	} = $props();
 
 	let dropdownOpen = $state(false);
+	let isScrollingDown = $state(false);
+	let isNavbarElevated = $state(true);
+	let showSearch = $state(showSearchButton);
+	let lastScrollY = $state(0);
 
 	const toggleDropdown = () => {
 		dropdownOpen = !dropdownOpen;
 	};
+
+	const handleScroll = () => {
+		const currentScrollY = window.scrollY;
+		
+		// Only track scroll direction if we have scrolled more than 5 pixels to avoid jitter
+		if (Math.abs(currentScrollY - lastScrollY) > 5) {
+			isScrollingDown = currentScrollY > lastScrollY && currentScrollY > 50;
+			
+			// Update navbar state based on scroll direction
+			isNavbarElevated = !isScrollingDown;
+			showSearch = showSearchButton && !isScrollingDown;
+			
+			lastScrollY = currentScrollY;
+		}
+	};
+
+	onMount(() => {
+		// Set initial values
+		lastScrollY = window.scrollY;
+		
+		// Add scroll event listener with debouncing for better performance
+		const debouncedHandleScroll = debounce(handleScroll, 10);
+		window.addEventListener('scroll', debouncedHandleScroll);
+		
+		return () => {
+			window.removeEventListener('scroll', debouncedHandleScroll);
+		};
+	});
 </script>
 
 <div
-	class="bg-background sticky top-0 z-50 w-screen space-y-[20px] rounded-b-[40px]  px-[16px] pt-[8px] pb-[16px] {showSearchButton ? 'shadow border-gray-200 border-b' : null} "
+	class="bg-background sticky top-0 z-50 w-screen px-[16px] pt-[8px] pb-[16px] transition-shadow duration-300 shadow {isNavbarElevated && showSearchButton ? ' border-gray-200 border-b rounded-b-[40px]' : ''}"
 >
 	<nav class="container mx-auto flex items-center justify-between">
 		<div>
@@ -91,8 +125,8 @@
 		{/if}
 	</nav>
 
-	{#if showSearchButton}
-		<div>
+	{#if showSearch}
+		<div transition:slide class="transition-all duration-300 pt-[20px]">
 			<a href="/search" class="form-input-icon w-full flex justify-start group bg-surface border-[#eaeaea] border">
 				<img
 					src="/icons/search.svg"

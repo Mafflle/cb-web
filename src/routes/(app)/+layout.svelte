@@ -15,7 +15,7 @@
 </script>
 
 <Navbar showSearchButton={page.url.pathname === '/'} />
-<div class="container mx-auto flex-1 px-[16px] pt-[32px] pb-5 lg:px-10">
+<div class="container mx-auto flex-1 px-[16px] pt-[32px] mb-[100px] lg:px-10">
 	{@render children()}
 </div>
 <Footer />
