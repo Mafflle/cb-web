@@ -57,7 +57,7 @@
 </script>
 
 <div
-	class="bg-background sticky top-0 z-50 w-screen px-[16px] pt-[8px] pb-[16px] transition-shadow duration-300 shadow {isNavbarElevated && showSearchButton ? ' border-gray-200 border-b rounded-b-[40px]' : ''}"
+	class="bg-background sticky top-0 z-20 w-screen px-[16px] pt-[8px] pb-[16px] transition-shadow duration-300 shadow {isNavbarElevated && showSearchButton ? ' border-gray-200 border-b rounded-b-[40px]' : ''}"
 >
 	<nav class="container mx-auto flex items-center justify-between">
 		<div>
