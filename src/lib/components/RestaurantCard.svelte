@@ -1,7 +1,5 @@
 <script lang="ts">
 	import type { Restaurant } from '$lib/types/restaurants.types';
-	import { showToast } from '../utils/toaster.svelte';
-	import appSettings from '$lib/stores/appSettings.svelte';
 	import { isRestaurantOpen } from '../utils/helpers';
 
 	let { restaurant, fullWidth = false }: { restaurant: Restaurant; fullWidth?: boolean } = $props();
@@ -37,7 +35,7 @@
 				alt={restaurant.name}
 				class="text-text-body h-[20px] w-[20px] rounded-full"
 			/>
-			<a href="/restaurants/{restaurant.slug}" class="text-h6 font-[700]">
+			<a href="/restaurants/{restaurant.slug}" class="text-h6 font-extrabold font-sans">
 				{restaurant.name}
 			</a>
 		</div>

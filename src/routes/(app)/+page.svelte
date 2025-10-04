@@ -4,6 +4,7 @@
 	import type { PageProps } from './$types';
 	import { showToast } from '$lib/utils/toaster.svelte';
 	import restaurantRepository from '$lib/repositories/restaurant.repository';
+	import Separator from '../../lib/components/Separator.svelte';
 
 	const { data }: PageProps = $props();
 
@@ -38,7 +39,7 @@
 
 
 
-<main class="space-y-8">
+<main>
 	{#if restaurants?.length === 0}
 		<div class="flex h-[200px] items-center justify-center">
 			<p class="text-lg font-bold text-[#3333338C]">No restaurants found</p>
@@ -57,6 +58,8 @@
 					</div>
 				</div>
 			</div>
+
+			<Separator color="#E0E0E0" width="100%" height="1px" py="40px" px="0" />
 		{/if}
 
 		<div>
