@@ -34,7 +34,7 @@
 
 	<!-- Buttons to increase/decrease quantity and add to cart -->
 
-	<div class="relative h-[138px] w-[180px] overflow-hidden rounded-[16px]">
+	<div class="relative h-[138px] w-[144px] overflow-hidden rounded-[16px]">
 		<img
 			src={item.image}
 			alt="Dish {index + 2}"
