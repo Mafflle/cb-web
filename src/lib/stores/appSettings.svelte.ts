@@ -63,9 +63,9 @@ const createStore = () => {
       currencyDisplay: 'code',
       compactDisplay: 'short',
 
-    }).format(price).replace("XOF", "CFA");
+    }).format(price).replace("XOF", "");
 
-    return formattedPrice;
+    return "CFA " +formattedPrice;
   }
 
 

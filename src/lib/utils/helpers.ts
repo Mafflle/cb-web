@@ -24,16 +24,18 @@ export const isRestaurantOpen = (openingHours: RestaurantOpeningHours, currentTi
 	const hours = openingHours[currentDay];
 	if (!hours) return false;
 
-	const isOpen = hours.open && hours.close;
-	if (!isOpen) return false;
+	if (hours.open && hours.close)  {
+		const [openHour, openMinute] = hours.open.split(':').map(Number);
+		const [closeHour, closeMinute] = hours.close.split(':').map(Number);
+	
+		const isAfterOpening = currentHour > openHour || (currentHour === openHour && currentMinute >= openMinute);
+		const isBeforeClosing = currentHour < closeHour || (currentHour === closeHour && currentMinute < closeMinute);
+	
+		return isAfterOpening && isBeforeClosing;
+	} else {
+		return false;
+	}
 
-	const [openHour, openMinute] = hours.open.split(':').map(Number);
-	const [closeHour, closeMinute] = hours.close.split(':').map(Number);
-
-	const isAfterOpening = currentHour > openHour || (currentHour === openHour && currentMinute >= openMinute);
-	const isBeforeClosing = currentHour < closeHour || (currentHour === closeHour && currentMinute < closeMinute);
-
-	return isAfterOpening && isBeforeClosing;
 };
 
 

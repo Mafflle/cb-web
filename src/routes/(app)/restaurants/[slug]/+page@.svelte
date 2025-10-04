@@ -4,18 +4,17 @@
 
 	import cartStore, { type Cart } from '$lib/stores/cart.svelte';
 	import Seo from '$lib/components/Seo.svelte';
-	import Breadcrumb from '$lib/components/Breadcrumb.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
 	import MenuItemCard from '$lib/components/MenuItemCard.svelte';
 	import {
 		getCurrentDayString,
 		getFormattedTime,
 		isRestaurantOpen
-	} from '../../../../lib/utils/helpers';
+	} from '$lib/utils/helpers';
 
 	let { data }: PageProps = $props();
 
-	let { restaurant } = $derived(data);
+	let { restaurant, items, featuredItems } = $derived(data);
 	let cart = $derived<Cart | null>(cartStore.carts[restaurant?.id as string] ?? null);
 	let cartItems = $derived(cart ? cart.items : []);
 
@@ -33,7 +32,7 @@
 		: 'Restaurant details - ChowBenin'}
 />
 
-{#if restaurant}
+{#if restaurant && items}
 	<header class="relative">
 		<div class="relative flex h-[164px] items-center">
 			<!-- Restaurant cover image -->
@@ -94,20 +93,25 @@
 				/>
 			</div>
 		</div>
-		<div class="mt-[60px] flex flex-col items-center">
-			<h1 class="text-h4 mb-[1rem] font-[800]">{restaurant.name}</h1>
+		<div class="mt-[72px] flex flex-col items-center">
+			<h1 class="text-h4 mb-[8px] font-[800]">{restaurant.name}</h1>
 			<div class="flex items-center">
 				<span
-					class="h-[8px] w-[8px] rounded-full {isRestaurantOpen(restaurant.opening_hours)
+					class="h-[8px] w-[8px] rounded-full {isRestaurantOpen(restaurant.opening_hours as any)
 						? 'bg-green-600'
 						: 'bg-red-600'}"
 				></span>
 				<!-- If restaurant opens today show open from time am - time pm else show closed for today -->
 				<p class="ml-2 text-sm font-[600] text-gray-600">
 					{#if restaurant.opening_hours && restaurant.opening_hours[getCurrentDayString()]?.open}
-						open from {getFormattedTime(
-							restaurant.opening_hours[getCurrentDayString()].open as string
-						)} - {getFormattedTime(restaurant.opening_hours[getCurrentDayString()].close as string)}
+						{#if restaurant.opening_hours[getCurrentDayString()].open === '00:00' &&
+							restaurant.opening_hours[getCurrentDayString()].close === '23:59'}
+							open 24 hours
+						{:else}
+							open from {getFormattedTime(
+								restaurant.opening_hours[getCurrentDayString()].open as string
+							)} - {getFormattedTime(restaurant.opening_hours[getCurrentDayString()].close as string)}
+						{/if}
 					{:else}
 						No opening hours available
 					{/if}
@@ -115,19 +119,39 @@
 			</div>
 		</div>
 	</header>
-	<main class="relative px-[16px] pt-[60px]">
-		<!-- Featured Items -->
-		<section class="" class:mb-20={cartItems.length > 0}>
-			<div class="items-center justify-between md:flex">
-				<h2 class="text-2xl font-bold">Featured items</h2>
-			</div>
+	<main class="relative px-[16px] pt-[30px]">
 
-			<div class="mt-6">
-				{#if restaurant && restaurant.items && restaurant.items.length > 0}
+		{#if featuredItems && featuredItems.length > 0 }
+			<section class="mb-10">
+				<div class="items-center justify-between md:flex">
+					<h2 class="text-2xl font-bold">Featured items</h2>
+				</div>
+
+				<div class="mt-6">
 					<div
 						class="grid grid-cols-1 gap-x-[8px] gap-y-5 md:grid-cols-2 md:gap-x-[10px] lg:grid-cols-3 lg:gap-x-[16px]"
 					>
-						{#each restaurant.items as item, index (index)}
+						{#each featuredItems as item, index (index)}
+							<MenuItemCard {item} {index} {restaurant} {cartItems} />
+						{/each}
+					</div>
+				</div>
+			</section>
+		{/if}
+		
+		<section class="" class:mb-20={cartItems.length > 0}>
+			<div class="items-center justify-between md:flex">
+				<h2 class="text-2xl font-bold">
+					Menu
+				</h2>
+			</div>
+
+			<div class="mt-6">
+				{#if items.length > 0}
+					<div
+						class="grid grid-cols-1 gap-x-[8px] gap-y-5 md:grid-cols-2 md:gap-x-[10px] lg:grid-cols-3 lg:gap-x-[16px]"
+					>
+						{#each items as item, index (index)}
 							<MenuItemCard {item} {index} {restaurant} {cartItems} />
 						{/each}
 					</div>
@@ -146,15 +170,6 @@
 			<div
 				class="bg-background border-border shadow-t-lg fixed right-0 bottom-0 left-0 z-50 border-t-2 p-4"
 			>
-				<!--
-				Cart Summary
-				
-				- Total price 
-				- Number of items in the cart
-				- Checkout button
-				- Clear cart button
-				-->
-
 				<div class="flex flex-col">
 					<p class=" font-bold">
 						Total:

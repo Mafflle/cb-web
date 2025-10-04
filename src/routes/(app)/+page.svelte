@@ -45,11 +45,10 @@
 		</div>
 	{:else if (restaurants && restaurants?.length > 0)}
 		{#if featuredRestaurants && featuredRestaurants.length > 0}
-			<!-- Side carousel for featured restaurants -->
 			<div class="mb-8">
-				<h2 class="mb-[16px] text-[20px] font-[700]">Featured today</h2>
+				<h2 class="mb-[16px] text-[20px] font-[700]">Featured today 🌟</h2>
 				<div class="relative">
-					<div class="flex overflow-x-auto space-x-4 scrollbar-hide">
+					<div class="flex overflow-x-auto space-x-4 py-[2px] scrollbar-hide">
 						{#each featuredRestaurants as restaurant (restaurant.id)}
 							<div class="min-w-[250px] flex-shrink-0">
 								<RestaurantCard {restaurant} />
@@ -60,12 +59,17 @@
 			</div>
 		{/if}
 
-		<div
-			class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-x-[10px] lg:grid-cols-4 lg:gap-x-[16px]"
-		>
-			{#each restaurants as restaurant (restaurant.id)}
-				<RestaurantCard {restaurant} fullWidth />
-			{/each}
+		<div>
+			<h2 class="mb-[16px] text-[20px] font-[700]">
+				Discover 🧭
+			</h2>
+			<div
+				class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-x-[10px] lg:grid-cols-4 lg:gap-x-[16px]"
+			>
+				{#each restaurants as restaurant (restaurant.id)}
+					<RestaurantCard {restaurant} fullWidth />
+				{/each}
+			</div>
 		</div>
 	{/if}
 </main>

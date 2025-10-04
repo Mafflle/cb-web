@@ -95,6 +95,7 @@ export type Database = {
           discount_price: number | null
           id: string
           image: string
+          is_featured: boolean | null
           menu_category_id: string | null
           name: string
           price: number
@@ -108,6 +109,7 @@ export type Database = {
           discount_price?: number | null
           id?: string
           image: string
+          is_featured?: boolean | null
           menu_category_id?: string | null
           name: string
           price: number
@@ -121,6 +123,7 @@ export type Database = {
           discount_price?: number | null
           id?: string
           image?: string
+          is_featured?: boolean | null
           menu_category_id?: string | null
           name?: string
           price?: number

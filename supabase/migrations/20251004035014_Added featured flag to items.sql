@@ -1,0 +1,2 @@
+ALTER TABLE items
+ADD COLUMN is_featured boolean DEFAULT false;
