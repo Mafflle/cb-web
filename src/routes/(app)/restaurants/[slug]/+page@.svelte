@@ -113,7 +113,7 @@
 							)} - {getFormattedTime(restaurant.opening_hours[getCurrentDayString()].close as string)}
 						{/if}
 					{:else}
-						No opening hours available
+						closed for today
 					{/if}
 				</p>
 			</div>
