@@ -16,7 +16,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"generate-database-types": "supabase gen types --local > src/lib/types/database.types.ts"
+		"generate-database-types": "supabase gen types --local > src/lib/types/database.types.ts",
+		"run-sms-function": "supabase functions serve send-sms --no-verify-jwt --env-file .env",
+		"deploy-sms-function": "supabase functions deploy send-sms --no-verify-jwt"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",

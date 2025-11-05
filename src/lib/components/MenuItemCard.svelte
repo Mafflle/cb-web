@@ -21,18 +21,25 @@
 	<div>
 		<h3 class="mb-[8px] font-medium" style="line-height: 20px;">{item.name}</h3>
 		<p class="text-text-muted line-clamp-2 text-[12px]">{item.description}</p>
-		<p class="text-text-heading mt-[16px] inline-flex text-[14px] font-medium">
+		<div class="mt-[16px] space-y-[12px]">
 			{#if item.discount_price}
-				<span class="">{appSettings.formatPrice(item.discount_price)}</span>
-				<span class="font-light italic line-through">{appSettings.formatPrice(item.price)}</span><br
-				/>
-			{:else}
-				{appSettings.formatPrice(item.price)}
+				<span
+					class="bg-tertiary mt-[16px] rounded-[4px] px-2 py-1 text-xs font-bold"
+				>
+					{Math.round(((item.price - item.discount_price) / item.price) * 100)}% OFF
+				</span>
 			{/if}
-		</p>
+			<p class="text-text-heading inline-flex text-[14px] font-medium">
+				{#if item.discount_price}
+					<span class="">{appSettings.formatPrice(item.discount_price)}</span>
+					<span class="font-light italic line-through">{appSettings.formatPrice(item.price)}</span><br
+					/>
+				{:else}
+					{appSettings.formatPrice(item.price)}
+				{/if}
+			</p>
+		</div>
 	</div>
-
-	<!-- Buttons to increase/decrease quantity and add to cart -->
 
 	<div class="relative h-[138px] w-[180px] overflow-hidden rounded-[16px]">
 		<img
@@ -71,12 +78,6 @@
 			{/if}
 		</div>
 
-		<!-- {#if item.discount_price}
-			<span
-				class="bg-accent-green absolute top-2 right-2 rounded px-2 py-1 text-xs font-bold text-white"
-			>
-				-{Math.round(((item.price - item.discount_price) / item.price) * 100)}%
-			</span>
-		{/if} -->
+		
 	</div>
 </div>

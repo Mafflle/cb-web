@@ -1,11 +1,11 @@
 <script lang="ts">
 	const {
-		color,
-		width,
-		height,
-		py,
-		px
-	}: { color: string; width: string; height: string; py: string; px: string } = $props();
+		color = "#E0E0E0",
+		width = "100%",
+		height = "1px",
+		py = "0",
+		px = "0"
+	}: { color?: string; width?: string; height?: string; py?: string; px?: string } = $props();
 </script>
 
 

@@ -1,5 +1,8 @@
 import { browser } from '$app/environment';
 import type { Tables } from '../types/database.types';
+import type { Restaurant } from '../types/restaurants.types';
+import { isRestaurantOpen } from '../utils/helpers';
+import { showToast } from '../utils/toaster.svelte';
 
 export type Cart = {
 		restaurantDetails: Tables<'restaurant'> | null,
@@ -42,7 +45,17 @@ const createStore = () => {
 		loadLocked = false;
 	};
 
-	const addItem = async (restaurant: Tables<'restaurant'>, item: any, quantity: number = 1) => {
+	const addItem = async (restaurant: Restaurant, item: any, quantity: number = 1) => {
+		const isOpen = isRestaurantOpen(restaurant.opening_hours);
+
+		if (!isOpen) {
+			showToast({
+				message: `${restaurant.name} is currently closed. You can only add items from open restaurants.`,
+				type: 'error',
+			});
+			return;
+		}
+
 		if (!carts[restaurant.id]) {
 			carts[restaurant.id] = {
 				restaurantDetails: restaurant,

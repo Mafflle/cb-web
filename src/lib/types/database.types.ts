@@ -233,6 +233,7 @@ export type Database = {
           special_instructions: string | null
           total: number
           total_price: number
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -250,6 +251,7 @@ export type Database = {
           special_instructions?: string | null
           total?: number
           total_price: number
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -267,6 +269,7 @@ export type Database = {
           special_instructions?: string | null
           total?: number
           total_price?: number
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -288,6 +291,7 @@ export type Database = {
           paid_at: string | null
           reference: string
           status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -298,6 +302,7 @@ export type Database = {
           paid_at?: string | null
           reference: string
           status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -308,6 +313,7 @@ export type Database = {
           paid_at?: string | null
           reference?: string
           status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -371,6 +377,33 @@ export type Database = {
           slug?: string
           start_price?: number
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          favorite_restaurants: string[] | null
+          id: number
+          language: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          favorite_restaurants?: string[] | null
+          id?: number
+          language?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          favorite_restaurants?: string[] | null
+          id?: number
+          language?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

@@ -11,7 +11,10 @@
 		getFormattedTime,
 		isRestaurantOpen
 	} from '$lib/utils/helpers';
-	import Footer from '$lib/components/Footer.svelte';
+	import { slide } from 'svelte/transition';
+	import Separator from '../../../../lib/components/Separator.svelte';
+	import Navbar from '../../../../lib/components/Navbar.svelte';
+	import Footer from '../../../../lib/components/Footer.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -32,6 +35,7 @@
 		? `${restaurant.description} - ChowBenin`
 		: 'Restaurant details - ChowBenin'}
 />
+<Navbar />
 <div class="mb-[100px]">
 	{#if restaurant && items}
 		<header class="relative">
@@ -40,7 +44,7 @@
 				<img
 					src={restaurant.cover_image}
 					alt="{restaurant.name} Cover Image"
-					class="h-full w-full rounded-lg object-cover"
+					class="h-full w-full object-cover"
 					loading="lazy"
 				/>
 	
@@ -120,6 +124,9 @@
 				</div>
 			</div>
 		</header>
+
+		<Separator py="36px" />
+
 		<main class="relative px-[16px] pt-[30px]">
 	
 			{#if featuredItems && featuredItems.length > 0 }
@@ -138,7 +145,11 @@
 						</div>
 					</div>
 				</section>
+
+				<Separator py="36px" />
 			{/if}
+
+
 			
 			<section class="" class:mb-20={cartItems.length > 0}>
 				<div class="items-center justify-between md:flex">
@@ -154,6 +165,8 @@
 						>
 							{#each items as item, index (index)}
 								<MenuItemCard {item} {index} {restaurant} {cartItems} />
+
+								<Separator py="36px" />
 							{/each}
 						</div>
 					{:else}
@@ -169,26 +182,30 @@
 	
 			{#if cartStore.carts[restaurant.id] && cartItems.length > 0}
 				<div
-					class="bg-background border-border shadow-t-lg fixed right-0 bottom-0 left-0 z-50 border-t-2 p-4"
+					transition:slide
+					class="bg-background border-[#EAEAEA] summary shadow-t-lg fixed right-0 bottom-0 left-0 z-50 border-t-2 p-4 text-[14px]"
 				>
 					<div class="flex flex-col">
-						<p class=" font-bold">
+						<p class="font-extrabold">
 							Total:
 							{appSettings.formatPrice(cartStore.carts[restaurant.id].total)}
 						</p>
-						<p class="text-sm text-gray-600">
-							{cartItems.length} item{cartItems.length > 1 ? 's' : ''} in cart
+						<p class="text-sm text-text-muted">
+							({cartItems.length}) item{cartItems.length > 1 ? 's' : ''} in cart
 						</p>
 						<a
 							href="/checkout?restaurant={restaurant.id}"
-							class="btn btn-primary mt-2 block text-center">Checkout</a
+							aria-disabled={!isRestaurantOpen(restaurant.opening_hours as any)}
+							class="btn btn-primary mt-2 block text-center rounded-full {!isRestaurantOpen(restaurant.opening_hours as any) ? 'btn-disabled' : ''}"
 						>
+							Proceed
+						</a>
 						<button
 							onclick={(event) => {
 								event.preventDefault();
 								cartStore.deleteCart(restaurant?.id as string);
 							}}
-							class="link hover:text-primary mt-2 block w-full text-center text-sm"
+							class="link hover:text-error mt-2 block w-full text-center text-s font-bold btn bg-transparent text-text-body text-[14px]"
 						>
 							Clear Cart
 						</button>
@@ -198,5 +215,10 @@
 		</main>
 	{/if}
 </div>
-
 <Footer />
+
+<style>
+	.summary {
+		box-shadow: 0 -6px 18.1px 0 rgba(0, 0, 0, 0.045);
+	}
+</style>

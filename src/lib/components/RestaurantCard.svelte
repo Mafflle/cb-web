@@ -11,7 +11,7 @@
 		: 'max-w-[300px]'} bg-background overflow-hidden rounded-[16px]"
 >
 	<a href="/restaurants/{restaurant.slug}" class="w-full">
-		<div class="relative h-[134px] overflow-hidden rounded-t-[16px]">
+		<div class="relative h-[{fullWidth ? '150px' : '134px'}] overflow-hidden rounded-t-[16px]">
 			{#if !isRestaurantOpen(restaurant.opening_hours as any)}
 				<div class="absolute z-10 flex h-full w-full items-center justify-center bg-black/70">
 					<span

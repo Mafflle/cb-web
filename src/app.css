@@ -111,10 +111,10 @@
 	.btn:hover {
 		@apply bg-primary-dark;
 	}
-	.btn:disabled {
+	.btn-disabled, .btn:disabled {
 		@apply cursor-not-allowed bg-gray-300 text-gray-500;
 	}
-	.btn:disabled:hover {
+	.btn-disabled:hover, .btn:disabled:hover {
 		@apply bg-gray-300;
 	}
 

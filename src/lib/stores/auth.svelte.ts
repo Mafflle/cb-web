@@ -1,6 +1,7 @@
 import { browser } from "$app/environment";
 import { invalidate } from "$app/navigation";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import userStore from "./user.svelte";
 
 const createStore = () => {
 	let loaded = $state(false);
@@ -31,6 +32,8 @@ const createStore = () => {
 				session = data.session;
 			}
 
+			await userStore.load(currentUser, supabase);
+
 			if (authStateSubscription) {
 				authStateSubscription.unsubscribe();
 			}
@@ -55,7 +58,9 @@ const createStore = () => {
 		if (supabase) {
 			const { data } = await supabase.auth.getSession();
 			session = data.session;
+			await userStore.load(currentUser, supabase!);
 		}
+
 	};
 
 	const cleanup = () => {
