@@ -1,70 +1,34 @@
 import { fail, type Actions } from '@sveltejs/kit';
-import { supportedCountries } from '$lib/utils/constants';
 
 export const actions: Actions = {
-	sendOtp: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const countryCode = formData.get('country_code') as string;
-		const phoneNumber = formData.get('phone_number') as string;
+	default: async ({ request, locals, url }) => {
+		const supabase = locals.supabase;
+		const data = await request.formData();
+		const email = data.get('email') as string;
+		const redirectTo = data.get('redirectTo') as string;
 
-		const cleanedPhoneNumber = phoneNumber.replace(/\D/g, '');
-		const fullPhoneNumber = `${countryCode}${cleanedPhoneNumber}`;
-
-		if (!phoneNumber || phoneNumber.length === 0) {
-			return fail(400, {
-				error: 'Please enter your phone number.'
-			});
-		} else if (phoneNumber.length < supportedCountries[countryCode].maxlength) {
-			return fail(400, {
-				error: `Phone number must be ${supportedCountries[countryCode].maxlength} digits.`
-			});
+		if (!email) {
+			return fail(400, { errors: {email: ['Email is required']} });
 		}
 
-		const { error } = await locals.supabase.auth.signInWithOtp({
-			phone: fullPhoneNumber,
+		const emailRegex =
+			/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+		if (!emailRegex.test(email)) {
+			return fail(400, { errors: {email: ['Invalid email address']} });
+		}
+
+		const redirectUrl = `${url.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`;
+
+		const { error } = await supabase.auth.signInWithOtp({
+			email,
 			options: {
-				channel: 'sms'
+				emailRedirectTo: redirectUrl,
+				shouldCreateUser: true
 			}
 		});
 
 		if (error) {
-			console.error('Error sending OTP:', error);
-			return fail(400, {
-				error: 'Error sending OTP. Please try again later or contact support.'
-			});
-		}
-
-		return { success: true };
-	},
-
-	verifyOtp: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const phoneNumber = formData.get('phone_number') as string;
-		const otp = formData.get('otp') as string;
-
-		if (!phoneNumber) {
-			return fail(400, { error: 'Error verifying OTP. Please try again.' });
-		}
-
-		if (!otp || otp.trim().length === 0) {
-			return fail(400, { error: 'Please enter the OTP sent to your phone.' });
-		}
-
-		const { error } = await locals.supabase.auth.verifyOtp({
-			phone: phoneNumber,
-			token: otp.trim(),
-			type: 'sms'
-		});
-
-		if (error) {
-			if (error.code === 'otp_expired') {
-				return fail(400, { error: 'Invalid OTP. Please try again.' });
-			}
-
-			console.error('Error verifying OTP:', error);
-			return fail(400, {
-				error: 'Error verifying OTP. Please try again later or contact support.'
-			});
+			return fail(500, { errors: { general: [error.message || "An unexpected error occurred"] } });
 		}
 
 		return { success: true };

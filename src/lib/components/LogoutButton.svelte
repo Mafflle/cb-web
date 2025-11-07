@@ -11,6 +11,7 @@
     return async ({ update, result }) => {
         update({ reset: true });
         await auth.refresh(); 
+        console.log('Current user', auth.currentUser)
         loggingOut = false;
     }
 }}>

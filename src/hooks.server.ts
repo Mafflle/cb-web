@@ -57,8 +57,11 @@ const authGuard: Handle = async ({ event, resolve }) => {
   const isAuthedRoute = routeId && routeId.includes('(authed)');
 
   if (isAuthedRoute && !event.locals.session) {
-    console.log('No session, redirecting to login');
-    redirect(303, '/auth/login?redirectTo=' + encodeURIComponent(event.url.pathname));
+    let redirectTo = event.url.pathname;
+    if (event.url.search) {
+      redirectTo += event.url.search;
+    }
+    redirect(303, '/auth/login?redirectTo=' + encodeURIComponent(redirectTo));
   }
 
   if (routeId?.startsWith('/auth') && event.locals.session) {

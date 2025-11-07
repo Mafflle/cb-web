@@ -57,7 +57,7 @@
 </script>
 
 <div
-	class="bg-background sticky top-0 z-20 w-screen px-[16px] pt-[8px] pb-[16px] transition-shadow duration-300 shadow {isNavbarElevated && showSearchButton ? ' border-gray-200 border-b rounded-b-[40px]' : ''}"
+	class="bg-background sticky top-0 z-20 w-screen px-[16px] pt-[8px] pb-[16px] transition-shadow duration-300 {!authNav ? 'shadow' : ''} {isNavbarElevated && showSearchButton ? ' border-gray-200 border-b rounded-b-[40px]' : ''}"
 >
 	<nav class="container mx-auto flex items-center justify-between">
 		<div>
@@ -93,14 +93,14 @@
 				<div class="relative">
 					<button
 						onclick={auth.currentUser ? toggleDropdown : async () => await goto('/auth/login')}
-						class="rounded-full bg-surface p-[10px]"
+						class="rounded-full cursor-pointer bg-surface p-[10px]"
 						aria-haspopup="true"
 						aria-expanded={dropdownOpen}
 						aria-label="User menu"
 					>
 						<img src="/icons/user.svg" alt="" loading="lazy" width="20" height="20" />
 					</button>
-					{#if dropdownOpen}
+					{#if dropdownOpen && auth.currentUser}
 						<div
 							class=" absolute right-0 z-10 mt-2 w-48 rounded-md bg-white shadow-lg focus:outline-none"
 							role="menu"

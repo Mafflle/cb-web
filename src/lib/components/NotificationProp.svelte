@@ -22,13 +22,14 @@
 <div
 	class="bg-surface border-border text-text-body flex items-center rounded-lg border p-4 text-sm shadow-lg"
 >
-	<!-- Icon -->
 	<div class="flex items-center">
 		<iconify-icon
 			icon={typeIcon[type]}
 			width="24"
 			height="24"
-			class="text-primary"
+			class:text-success={type === 'success'}
+			class:text-error={type === 'error'}
+			class:text-blue-600={type === 'info'}
 			style="margin-right: 0.5rem"
 		></iconify-icon>
 	</div>
