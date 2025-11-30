@@ -37,7 +37,6 @@ const createStore = () => {
 			const storedCarts = localStorage.getItem('carts');
 			if (storedCarts) {
 				carts = JSON.parse(storedCarts);
-				console.log('Carts loaded from localStorage:', carts);
 			}
 		}
 

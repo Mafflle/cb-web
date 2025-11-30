@@ -1,8 +1,15 @@
 import type { RestaurantOpeningHours } from "../types/restaurants.types";
 
 export const getOrderTotalPrice = (order: any) => {
+	if (order.total_price !== undefined) {
+		return order.total_price;
+	}
 	return order.total_price + order.delivery_fee + order.service_charge;
 };
+
+export const convertAmount = (amount: number, exchangeRate: number): number => {
+	return Math.ceil(amount / exchangeRate);
+}
 
 export const debounce = (func: (...args: any[]) => void, delay: number) => {
 	let timeout: NodeJS.Timeout;

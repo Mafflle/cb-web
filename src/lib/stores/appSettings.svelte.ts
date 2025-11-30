@@ -1,3 +1,4 @@
+import internalSettingsRepository from "../repositories/internal_settings.repository";
 import { type Database } from "../types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -10,16 +11,7 @@ const createStore = () => {
   let exchangeRate = $state<number>(1); 
 
   const loadInternalSettings = async (supabase: SupabaseClient<Database>) => {
-    const { data: settingsData, error: settingsError } = await supabase
-    .from('internal_settings')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .single();
-
-    if (settingsError) {
-      console.error('Error loading settings:', settingsError);
-      return;
-    }
+    const settingsData = await internalSettingsRepository.getInternalSettings(supabase);
 
     if (settingsData) {
       deliveryFee = settingsData.delivery_fee;
@@ -27,24 +19,11 @@ const createStore = () => {
       exchangeRate = settingsData.exchange_rate;
     }
 
-    await supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'internal_settings',
-        },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            const updatedSettings = payload.new;
-            deliveryFee = updatedSettings.delivery_fee || 0;
-            serviceCharge = updatedSettings.service_charge || 0;
-          }
-        }
-      )
-      .subscribe()
+    await internalSettingsRepository.subscribe(supabase, (newSettings) => {
+      deliveryFee = newSettings.delivery_fee;
+      serviceCharge = newSettings.service_charge;
+      exchangeRate = newSettings.exchange_rate;
+    });
   }
 
   const getConvertedPrice = (price: number ) => {
@@ -53,7 +32,21 @@ const createStore = () => {
     return Math.ceil(price / exchangeRate);
   }
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number, currency: "XOF" | "NGN" = "XOF") => {
+    if (currency === "NGN") {
+      const formattedPrice = new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: "NGN",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        currencySign: 'accounting',
+        currencyDisplay: 'code',
+        compactDisplay: 'short',
+      }).format(price).replace("NGN", "");
+
+      return "₦ " + formattedPrice;
+    }
+    
     const formattedPrice = new Intl.NumberFormat('fr-BJ', {
       style: 'currency',
       currency: "XOF",

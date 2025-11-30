@@ -225,7 +225,6 @@ export type Database = {
           id: string
           name: string
           order_status: Database["public"]["Enums"]["order_status"]
-          payment_reference: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           phone: string
           restaurant_id: string
@@ -243,7 +242,6 @@ export type Database = {
           id?: string
           name: string
           order_status?: Database["public"]["Enums"]["order_status"]
-          payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone: string
           restaurant_id: string
@@ -261,7 +259,6 @@ export type Database = {
           id?: string
           name?: string
           order_status?: Database["public"]["Enums"]["order_status"]
-          payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string
           restaurant_id?: string
@@ -284,37 +281,37 @@ export type Database = {
       }
       payments: {
         Row: {
-          amount_xof: number
-          created_at: string
-          id: number
-          order_id: string
-          paid_at: string | null
-          reference: string
-          status: Database["public"]["Enums"]["payment_status"]
+          amount: number
+          created_at: string | null
+          currency: string
+          id: string
+          order_id: string | null
+          payment_method: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          transaction_reference: string
           updated_at: string | null
-          user_id: string
         }
         Insert: {
-          amount_xof: number
-          created_at?: string
-          id?: number
-          order_id: string
-          paid_at?: string | null
-          reference: string
-          status?: Database["public"]["Enums"]["payment_status"]
+          amount: number
+          created_at?: string | null
+          currency: string
+          id?: string
+          order_id?: string | null
+          payment_method: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          transaction_reference: string
           updated_at?: string | null
-          user_id: string
         }
         Update: {
-          amount_xof?: number
-          created_at?: string
-          id?: number
-          order_id?: string
-          paid_at?: string | null
-          reference?: string
-          status?: Database["public"]["Enums"]["payment_status"]
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          order_id?: string | null
+          payment_method?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          transaction_reference?: string
           updated_at?: string | null
-          user_id?: string
         }
         Relationships: [
           {

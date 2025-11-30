@@ -1,11 +1,11 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Tables } from "../types/database.types";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database, Tables } from '../types/database.types';
 
-export type Order = Tables<"orders"> & {
-  order_items: (Tables<"order_items"> & {
-    items: Tables<"items">;
-  })[];
-  restaurant: Tables<"restaurant">;
+export type Order = Tables<'orders'> & {
+	order_items: (Tables<'order_items'> & {
+		items: Tables<'items'>;
+	})[];
+	restaurant: Tables<'restaurant'>;
 };
 
 export type OrderInput = {
@@ -16,10 +16,10 @@ export type OrderInput = {
 	address: string;
 	phone: string;
 	specialInstructions?: string;
-}
+};
 
 const createRepo = () => {
-  const getAll = async (supabase: SupabaseClient, userId: string): Promise<Order[]> => {
+	const getAll = async (supabase: SupabaseClient, userId: string): Promise<Order[]> => {
 		const { data, error } = await supabase
 			.from('orders')
 			.select('*, order_items(*, items (*)), restaurant(*)')
@@ -33,7 +33,7 @@ const createRepo = () => {
 		return data;
 	};
 
-  const getById = async (supabase: SupabaseClient, id: string): Promise<Order | null> => {
+	const getById = async (supabase: SupabaseClient, id: string): Promise<Order | null> => {
 		const { data, error } = await supabase
 			.from('orders')
 			.select('*, order_items(*, items (*)), restaurant(*)')
@@ -47,26 +47,51 @@ const createRepo = () => {
 		return data;
 	};
 
-	const subscribeToOrderChanges = async (supabase: SupabaseClient, orderId: string, callback: (order: Order) => void) => {
-		return await supabase.channel('schema-db-changes').on(
+	const getPaymentByTransactionRef = async (
+		supabase: SupabaseClient<Database>,
+		transactionRef: string
+	): Promise<Tables<'payments'> | null> => {
+		const { data, error } = await supabase.from('payments').select('*').eq('transaction_reference', transactionRef).single();
+
+		if (error) {
+			throw error;
+		}
+
+		return data;
+	}
+
+	const subscribeToOrderChanges = async (
+		supabase: SupabaseClient,
+		orderId: string,
+		callback: (order: Order) => void
+	) => {
+		const filter = `id=eq.${orderId}`;
+		const channel = supabase.channel(`order-changes-${orderId}`).on(
 			'postgres_changes',
 			{
 				event: '*',
 				schema: 'public',
 				table: 'orders',
-				filter: `id=eq.${orderId}`,
+				filter: filter
 			},
 			(payload) => {
+				console.log('Order change received:', payload);
 				if (payload.new) {
 					callback(payload.new as Order);
 				}
 			}
-		).subscribe();
+		);
+
+		await channel.subscribe((status) => {
+			if (status === 'SUBSCRIBED') {
+				console.log(`Subscribed to order changes for order ID: ${orderId}`);
+			}
+		});
+
+		return channel;
 	};
 
 	const placeOrder = async (supabase: SupabaseClient, order: OrderInput, userId: string) => {
-
-		// Create the order object
 		const orderData = {
 			...order,
 			userId
@@ -98,13 +123,42 @@ const createRepo = () => {
 		}
 	};
 
-  return {
-    getAll,
-    getById,
+	const verifyOrderPayment = async (
+		supabase: SupabaseClient,
+		orderId: string,
+		transactionRef: string
+	): Promise<boolean> => {
+		try {
+			const response = await fetch(`/api/orders/verify/${orderId}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ transactionRef })
+			})
+
+			if (!response.ok) {
+				console.error('Failed to verify payment:', response.statusText);
+				return false;
+			}
+
+			const result = await response.json();
+			return result.success === true;
+		} catch (error) {
+			console.error('Error verifying payment:', error);
+			return false;
+		}
+	};
+
+	return {
+		getAll,
+		getById,
 		subscribeToOrderChanges,
-		placeOrder
-  };
-}
+		placeOrder,
+		verifyOrderPayment,
+		getPaymentByTransactionRef
+	};
+};
 
 const ordersRepository = createRepo();
 

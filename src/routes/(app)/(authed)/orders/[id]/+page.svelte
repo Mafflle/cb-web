@@ -1,36 +1,42 @@
 <script lang="ts">
-	import { page, updated } from '$app/state';
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	import Breadcrumb from '$lib/components/Breadcrumb.svelte';
 
-	import orders from '$lib/stores/orders.svelte';
+	// import orders from '$lib/stores/orders.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
 	import { showToast } from '$lib/utils/toaster.svelte';
-	import type { PageProps } from '../$types';
-	import ordersRepository from '../../../../../lib/repositories/orders.repository';
+	import type { PageProps, SubmitFunction } from './$types';
+	import ordersRepository from '$lib/repositories/orders.repository';
 	import type { RealtimeChannel } from '@supabase/supabase-js';
+	import Seo from '$lib/components/Seo.svelte';
+	import { enhance } from '$app/forms';
+	import PaystackPop from '@paystack/inline-js';
 
-	
 	const { data }: PageProps = $props();
 
-	let { order, supabase } = $derived(data);
+	let { supabase } = $derived(data);
+	let { order } = $state(data);
+	let processingPayment = $state(false);
+	let transactionRef: string | null = $derived(null);
 
-	let orderSub: RealtimeChannel;
-	
-	onMount(() => {
-		ordersRepository.subscribeToOrderChanges(supabase, order.id, (updatedOrder) => {
-			if (updatedOrder) {
-				order = updatedOrder;
+	let orderSub: RealtimeChannel | null = null;
+
+	onMount(async () => {
+		orderSub = await ordersRepository.subscribeToOrderChanges(
+			supabase,
+			order.id,
+			(updatedOrder) => {
+				if (updatedOrder) {
+					order = { ...order, ...updatedOrder };
+				}
 			}
-		}).then(sub => orderSub = sub);
-
-		return () => {
-			orderSub?.unsubscribe();
-		};
+		);
 	});
 
+	onDestroy(() => {
+		orderSub?.unsubscribe();
+	});
 
 	const progressMap: any = {
 		confirmed: 1,
@@ -45,28 +51,93 @@
 		return order.payment_status === 'paid' && currentProgress >= progressMap[status];
 	};
 
-	const handlePayWithNaira = async () => {
-		try {
-			await orders.pay(order.id, 'naira');
-		} catch (error) {
-			showToast({
-				message: 'Error processing payment. Please try again.',
-				type: 'error'
-			});
-			console.error('Error processing payment:', error);
-		}
+	const enhanceNairaPayment: SubmitFunction = () => {
+		processingPayment = true;
+
+		return async ({ result }) => {
+			try {
+				if (result.type === 'success') {
+					const paystackData = result.data?.paystackData;
+					const accessCode = paystackData?.data?.access_code;
+	
+					if (!accessCode) {
+						showToast({
+							message: 'Invalid payment data received. Please try again.',
+							type: 'error'
+						});
+						return;
+					}
+	
+					const popup = new PaystackPop();
+	
+					popup.resumeTransaction(paystackData.data.access_code, {
+						onCancel: () => {
+							showToast({
+								message: 'Payment process was cancelled.',
+								type: 'error'
+							});
+							processingPayment = false;
+						},
+						onError: (error: { message: string }) => {
+							showToast({
+								message: `Payment failed: ${error.message}`,
+								type: 'error'
+							});
+							processingPayment = false;
+						},
+						onSuccess: async (transaction: { reference: string }) => {
+							const isPaid = await ordersRepository.verifyOrderPayment(
+								supabase,
+								order.id,
+								transaction.reference
+							);
+							
+							if (isPaid) {
+								showToast({
+									message: 'Payment successful! Thank you for your order.',
+									type: 'success'
+								});
+							}
+							processingPayment = false;
+						}
+					});
+	
+					showToast({
+						message: 'Redirecting to payment gateway...',
+						type: 'success'
+					});
+				} else if (result.type === 'error') {
+					showToast({
+						message: 'Failed to initiate payment. Please try again.',
+						type: 'error'
+					});
+					processingPayment = false;
+				} else {
+					showToast({
+						message: 'Payment process was cancelled.',
+						type: 'info'
+					});
+					processingPayment = false;
+				}
+
+				
+			} catch (error) {
+				showToast({
+					message: 'An unexpected error occurred during payment. Please try again.',
+					type: 'error'
+				});
+				processingPayment = false;
+			}
+		};
 	};
 </script>
 
-<div class="flex flex-col gap-4">
-	<!-- 
-    Layout
-    
-    - Order Details
-    - Order Items
-    - Payment Buttons (Pay with Naira, Pay with Momo (Coming Soon))
-    -->
+<Seo
+	title="Order Details - ChowBenin"
+	description="View your order details and payment options on ChowBenin"
+/>
 
+<div class="flex flex-col gap-4">
 	{#if order}
 		<Breadcrumb text="Back to Orders" href="/orders" />
 		<div class="bg-surface border-border flex flex-col gap-4 rounded-lg border p-4 shadow-md">
@@ -136,12 +207,15 @@
 						Payment {order.payment_status === 'pending' ? 'Pending' : 'Completed'}
 					</span>
 					{#if order.payment_status === 'pending'}
-						<button
-							onclick={handlePayWithNaira}
-							class="text-primary ml-auto flex items-center justify-center text-sm font-bold hover:underline"
-						>
-							Pay Now
-						</button>
+						<form action="?/pay" class="ml-auto" method="POST" use:enhance={enhanceNairaPayment}>
+							<button
+								type="submit"
+								class="text-primary flex items-center justify-center text-sm font-bold hover:underline focus:outline-none"
+								disabled={processingPayment}
+							>
+								{processingPayment ? 'Processing...' : 'Pay Now'}
+							</button>
+						</form>
 					{/if}
 				</li>
 				<li class="flex items-center">
@@ -204,7 +278,7 @@
 
 				{#if order.special_instructions}
 					<li class="font-semibold">
-						Delivery Instructions: {order.delivery_instructions}
+						Delivery Instructions: {order.special_instructions}
 					</li>
 				{/if}
 			</ul>
@@ -251,9 +325,19 @@
 			</div>
 
 			{#if order.payment_status === 'pending' || order.payment_status === 'failed'}
-				<button onclick={handlePayWithNaira} class="btn flex items-center justify-center text-sm">
-					Pay With Naira ({appSettings.formatPrice(order.total)})
-				</button>
+				<form action="?/pay" class="w-full" method="POST" use:enhance={enhanceNairaPayment}>
+					<button class="btn flex w-full items-center justify-center text-sm">
+						{#if processingPayment}
+							<span
+								class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"
+							></span>
+						{/if}
+						Pay With Naira ({appSettings.formatPrice(
+							appSettings.getConvertedPrice(order.total),
+							'NGN'
+						)})
+					</button>
+				</form>
 				<button class="btn flex items-center justify-center text-sm" disabled>
 					Pay With Momo (Coming Soon)
 				</button>
