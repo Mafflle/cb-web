@@ -12,8 +12,20 @@ const createStore = () => {
       .eq('user_id', userId)
       .single();
 
-    // TODO: Create the user preferences if they don't exist
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
+      if (error.code === 'PGRST116') {
+        const { data: newData, error: insertError } = await supabase
+          .from('user_preferences')
+          .insert({ user_id: userId })
+          .single();
+
+        if (insertError) {
+          throw insertError;
+        }
+
+        userPreferences = newData;
+        return;
+      }
       throw error;
     }
 
