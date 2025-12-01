@@ -1,4 +1,3 @@
-import { browser } from "$app/environment";
 import { invalidate } from "$app/navigation";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import userStore from "./user.svelte";
@@ -38,10 +37,8 @@ const createStore = () => {
 				authStateSubscription.unsubscribe();
 			}
 	
-			const {data} = supabase.auth.onAuthStateChange(async (_event: string, newSession: Session | null) => {
-				session = newSession;
-
-				if (browser) {
+			const {data} = supabase.auth.onAuthStateChange(async (_event: string, _session: Session | null) => {
+				if (_session?.expires_at !== session?.expires_at) {
 					await invalidate('supabase:auth');
 				}
 			});

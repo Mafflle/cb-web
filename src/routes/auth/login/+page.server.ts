@@ -17,13 +17,16 @@ export const actions: Actions = {
 			return fail(400, { errors: {email: ['Invalid email address']} });
 		}
 
-		const redirectUrl = `${url.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`;
+		console.log(`Sending magic link to ${email} with redirect to ${redirectTo}`);
+
+		const redirectUrl = new URL('/auth/callback', url.origin);
+		console.log(`Full redirect URL for magic link: ${redirectUrl.toString()}`);
 
 		const { error } = await supabase.auth.signInWithOtp({
 			email,
 			options: {
-				emailRedirectTo: redirectUrl,
-				shouldCreateUser: true
+				shouldCreateUser: false,
+				emailRedirectTo: redirectUrl.toString()
 			}
 		});
 

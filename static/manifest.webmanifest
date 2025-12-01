@@ -7,6 +7,12 @@
 	"background_color": "#ffffff",
 	"theme_color": "#df6e1d",
 	"orientation": "portrait-primary",
+	"scope": "/",
+	"id": "/",
+	"handle_links": "preferred",
+	"launch_handler": {
+		"client_mode": "navigate-existing"
+	},
 	"icons": [
 		{
 			"src": "/images/pwa-192.png",
