@@ -114,12 +114,7 @@
 				onclick={async () => {
 					googleLoading = true;
 					try {
-						await supabase.auth.signInWithOAuth({
-							provider: 'google',
-							options: {
-								redirectTo: `${page.url.origin}/auth/callback`,
-							},
-						})
+						await supabase.auth.signInWithOAuth({ provider: 'google' })
 					} catch (error) {
 						showToast({
 							type: 'error',

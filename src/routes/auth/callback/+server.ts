@@ -1,25 +1,27 @@
-import { redirect, type RequestHandler } from "@sveltejs/kit";
+import type { EmailOtpType } from '@supabase/supabase-js';
+import { redirect, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ url, locals }) => {
-  const redirectTo = url.searchParams.get('redirectTo') || '/';
-  if (locals.session) {
-    throw redirect(303, redirectTo);
-  }
+	if (locals.session) {
+		throw redirect(303, '/');
+	}
 
-  const code = url.searchParams.get('code');
-  if (!code) {
-    throw redirect(303, '/auth/login');
-  }
+	const token_hash = url.searchParams.get('token_hash');
+	const type = url.searchParams.get('type') as EmailOtpType | null;
+	const next = url.searchParams.get('next') ?? '/';
 
-  const { error } = await locals.supabase.auth.exchangeCodeForSession(code);
-  
-  if (error) {
-    throw redirect(303, '/auth/login');
-  }
+	const redirectTo = new URL(url);
+	redirectTo.pathname = next;
+	redirectTo.searchParams.delete('token_hash');
+	redirectTo.searchParams.delete('type');
 
-  if (redirectTo) {
-    throw redirect(303, redirectTo);
-  }
+	if (token_hash && type) {
+		const { error } = await locals.supabase.auth.verifyOtp({ type, token_hash });
+    if (!error) {
+      redirectTo.searchParams.delete('next');
+      throw redirect(303, redirectTo);
+    }
+	}
 
-  throw redirect(303, '/');
+	throw redirect(303, '/auth/error');
 };
