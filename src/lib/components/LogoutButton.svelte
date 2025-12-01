@@ -15,7 +15,7 @@
         loggingOut = false;
     }
 }}>
-    <button class="btn flex w-full items-center justify-center" type="submit">
+    <button class="btn flex w-full items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 rounded-full" type="submit">
         {#if loggingOut}
             <iconify-icon icon="eos-icons:loading" width="16" height="16"></iconify-icon>
         {:else}
