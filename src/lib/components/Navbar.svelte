@@ -7,7 +7,7 @@
 	import { debounce } from '$lib/utils/helpers';
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	let {
 		authNav = false,
@@ -38,11 +38,9 @@
 	const handleScroll = () => {
 		const currentScrollY = window.scrollY;
 		
-		// Only track scroll direction if we have scrolled more than 5 pixels to avoid jitter
 		if (Math.abs(currentScrollY - lastScrollY) > 5) {
 			isScrollingDown = currentScrollY > lastScrollY && currentScrollY > 50;
 			
-			// Update navbar state based on scroll direction
 			isNavbarElevated = !isScrollingDown;
 			showSearch = showSearchButton && !isScrollingDown;
 			
@@ -50,10 +48,10 @@
 		}
 	};
 
-	// Reset scroll state when page changes
 	$effect(() => {
-		$page.url.pathname;
+		page.url.pathname;
 		resetScrollState();
+		dropdownOpen = false;
 	});
 
 	onMount(() => {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Footer from '$lib/components/Footer.svelte';
+	import Onboarding from '$lib/components/Onboarding.svelte';
 	import cart from '$lib/stores/cart.svelte';
 	import { browser } from '$app/environment';
 	import { navigating, page } from '$app/state';
@@ -16,6 +17,8 @@
 
 	let showLoader = $derived(!!navigating.to)
 </script>
+
+<Onboarding />
 
 {#if showLoader}
 	<NavigationLoader />
