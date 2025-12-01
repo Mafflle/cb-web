@@ -7,7 +7,7 @@
   <meta name="x-apple-disable-message-reformatting">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <title>Sign in to ChowBenin</title>
+  <title>Your ChowBenin Verification Code</title>
   <!--[if mso]>
   <noscript>
     <xml>
@@ -53,12 +53,6 @@
       font-weight: inherit !important;
       line-height: inherit !important;
     }
-    /* Button hover - for clients that support it */
-    @media screen {
-      .button-link:hover {
-        background-color: #e64a19 !important;
-      }
-    }
     /* Mobile styles */
     @media only screen and (max-width: 600px) {
       .email-container {
@@ -69,9 +63,9 @@
         padding-left: 24px !important;
         padding-right: 24px !important;
       }
-      .mobile-stack {
-        display: block !important;
-        width: 100% !important;
+      .otp-code {
+        font-size: 32px !important;
+        letter-spacing: 8px !important;
       }
     }
   </style>
@@ -80,7 +74,7 @@
   
   <!-- Preview text (hidden) -->
   <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
-    Click to sign in to your ChowBenin account - no password needed!
+    Your verification code is {{ .Token }} - Enter this code to sign in to ChowBenin
     &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
   </div>
 
@@ -94,48 +88,57 @@
           
           <!-- Header with logo -->
           <tr>
-            <td align="center" style="padding: 40px 40px 32px 40px;" class="mobile-padding">
+            <td align="center" style="padding: 40px 40px 24px 40px;" class="mobile-padding">
               <!-- Logo -->
-              <img src="https://dev.chowbenin.com/images/logo-primary.png" alt="ChowBenin" width="160" height="40" style="display: block; width: 160px; height: auto;">
+              <img src="https://res.cloudinary.com/sheyzisilver/image/upload/v1764631309/logo-primary_bafkmo.png" alt="ChowBenin" width="140" height="35" style="display: block; width: 140px; height: auto;">
             </td>
           </tr>
 
-          <!-- Decorative food icons -->
+          <!-- Email icon -->
           <tr>
-            <td align="center" style="padding: 0 40px;" class="mobile-padding">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                <tr>
-                  <td style="font-size: 28px; padding: 0 8px;">🍛</td>
-                  <td style="font-size: 28px; padding: 0 8px;">🍜</td>
-                  <td style="font-size: 28px; padding: 0 8px;">🍲</td>
-                </tr>
-              </table>
+            <td align="center" style="padding: 0 40px 16px 40px;" class="mobile-padding">
+              <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #fff5f2 0%, #ffebe5 100%); border-radius: 50%; display: inline-block; text-align: center; line-height: 64px;">
+                <span style="font-size: 28px;">✉️</span>
+              </div>
             </td>
           </tr>
 
           <!-- Main content -->
           <tr>
-            <td style="padding: 32px 40px 24px 40px;" class="mobile-padding">
-              <h1 style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #1a1a1a; text-align: center; line-height: 1.3;">
-                Sign in to ChowBenin
+            <td style="padding: 16px 40px 8px 40px;" class="mobile-padding">
+              <h1 style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 700; color: #1a1a1a; text-align: center; line-height: 1.3;">
+                Your Verification Code
               </h1>
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666; text-align: center; line-height: 1.6;">
-                Click the button below to securely sign in to your account. No password needed!
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #666666; text-align: center; line-height: 1.6;">
+                Enter this code in the app to sign in to your ChowBenin account:
               </p>
             </td>
           </tr>
 
-          <!-- CTA Button -->
+          <!-- OTP Code Box -->
           <tr>
-            <td align="center" style="padding: 8px 40px 32px 40px;" class="mobile-padding">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+            <td align="center" style="padding: 24px 40px 24px 40px;" class="mobile-padding">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background-color: #f8f8f8; border-radius: 12px; border: 2px dashed #e0e0e0;">
                 <tr>
-                  <td style="border-radius: 50px; background: linear-gradient(135deg, #ff5722 0%, #ff7a50 100%); background-color: #ff5722;">
-                    <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email" target="_blank" class="button-link" style="display: inline-block; padding: 18px 48px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 50px;">
-                      <!--[if mso]>&nbsp;&nbsp;&nbsp;<![endif]-->
-                      Sign In to ChowBenin
-                      <!--[if mso]>&nbsp;&nbsp;&nbsp;<![endif]-->
-                    </a>
+                  <td style="padding: 24px 40px;">
+                    <p class="otp-code" style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 40px; font-weight: 700; color: #ff5722; text-align: center; letter-spacing: 12px;">
+                      {{ .Token }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Expiry notice -->
+          <tr>
+            <td align="center" style="padding: 0 40px 24px 40px;" class="mobile-padding">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background-color: #fff8f5; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 12px 20px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #666666; text-align: center;">
+                      ⏱️ This code expires in <strong style="color: #ff5722;">10 minutes</strong>
+                    </p>
                   </td>
                 </tr>
               </table>
@@ -153,36 +156,18 @@
             </td>
           </tr>
 
-          <!-- Alternative link -->
-          <tr>
-            <td style="padding: 24px 40px;" class="mobile-padding">
-              <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #888888; text-align: center;">
-                Button not working? Copy and paste this link into your browser:
-              </p>
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #ff5722; text-align: center; word-break: break-all;">
-                <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email" target="_blank" style="color: #ff5722; text-decoration: underline;">{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email</a>
-              </p>
-            </td>
-          </tr>
-
           <!-- Security notice -->
           <tr>
-            <td style="padding: 0 40px 32px 40px;" class="mobile-padding">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #fff8f5; border-radius: 12px;">
+            <td style="padding: 24px 40px 32px 40px;" class="mobile-padding">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
-                  <td style="padding: 16px 20px;">
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                      <tr>
-                        <td width="24" valign="top" style="padding-right: 12px;">
-                          <span style="font-size: 18px;">🔒</span>
-                        </td>
-                        <td>
-                          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #666666; line-height: 1.5;">
-                            <strong style="color: #1a1a1a;">Security tip:</strong> This link expires in 1 hour and can only be used once. If you didn't request this, you can safely ignore this email.
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
+                  <td width="24" valign="top" style="padding-right: 12px;">
+                    <span style="font-size: 16px;">🔒</span>
+                  </td>
+                  <td>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #888888; line-height: 1.5;">
+                      <strong style="color: #555555;">Security tip:</strong> Never share this code with anyone. ChowBenin will never ask for your code via phone or message.
+                    </p>
                   </td>
                 </tr>
               </table>
@@ -197,27 +182,8 @@
           <tr>
             <td style="padding: 32px 40px 16px 40px;" class="mobile-padding">
               <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #999999; text-align: center; line-height: 1.6;">
-                Hungry? Order delicious food from restaurants near you.
+                If you didn't request this code, you can safely ignore this email.
               </p>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding: 0 40px 32px 40px;" class="mobile-padding">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                <tr>
-                  <td style="padding: 0 8px;">
-                    <a href="https://chowbenin.com" target="_blank" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #ff5722; text-decoration: none;">
-                      Visit Website
-                    </a>
-                  </td>
-                  <td style="color: #cccccc;">|</td>
-                  <td style="padding: 0 8px;">
-                    <a href="mailto:support@chowbenin.com" target="_blank" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #ff5722; text-decoration: none;">
-                      Get Help
-                    </a>
-                  </td>
-                </tr>
-              </table>
             </td>
           </tr>
           <tr>
