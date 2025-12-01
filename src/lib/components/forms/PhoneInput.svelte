@@ -12,7 +12,7 @@
 	} = $props();
 </script>
 
-<div class="form-phone-input" class:border-red-500={error !== null}>
+<div class="form-phone-input" class:form-error={error !== null}>
 	<select
 		bind:value={countryCode}
 		autocomplete="tel-country-code"

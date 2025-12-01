@@ -58,6 +58,7 @@
 	--color-error: #ff6347;
 	--color-success: var(--color-secondary);
 	--color-warning: var(--color-tertiary);
+	--color-info: #3b82f6;
 	--color-primary-dark: #e06b00; 
 	--color-accent-green: var(--color-secondary);
 	--color-accent-red: var(--color-error);
@@ -106,7 +107,7 @@
 @layer components {
 	/* Buttons */
 	.btn {
-		@apply bg-primary rounded px-4 py-2 font-bold text-white;
+		@apply bg-primary px-4 py-[18px] rounded-full font-bold text-white;
 	}
 	.btn:hover {
 		@apply bg-primary-dark;
@@ -132,16 +133,23 @@
 	}
 
 	/* Forms */
+
+	.form-label {
+		@apply block font-extrabold mb-1.5 text-sm;
+	}
+
 	.form-input {
-		@apply bg-surface ring-border w-full rounded-md p-2 ring;
+		@apply bg-surface ring-border w-full rounded-[12px] px-[16px] py-[10px];
 	}
 
 	.form-input:focus {
-		@apply ring-primary outline-none;
+		@apply outline-1 outline-primary bg-white;
+		box-shadow: 0 0 0 4px rgba(223, 110, 29, 0.39);
 	}
 
 	.form-input.form-error {
-		@apply ring-accent-red;
+		@apply outline outline-error;
+		box-shadow: 0 0 0 4px rgba(255, 99, 71, 0.39);
 	}
 
 	/* Form inputs with icon */
@@ -154,25 +162,35 @@
 
 	/* Form phone input (with select and input) */
 	.form-phone-input {
-		@apply border-border bg-surface flex items-center rounded-md border;
+		@apply border-border bg-surface flex items-center rounded-[12px] ;
+	}
+	.form-phone-input:focus-within {
+		@apply outline outline-primary bg-white;
+		box-shadow: 0 0 0 4px rgba(223, 110, 29, 0.39);
 	}
 	.form-phone-input select {
-		@apply bg-surface border-border rounded-l-md p-2 ring-0;
+		@apply bg-transparent border-border rounded-l-[12px] pl-[16px] pr-2 py-[10px] outline-none;
 	}
 	.form-phone-input input {
-		@apply bg-surface w-full rounded-r-md border-none p-2 ring-0;
+		@apply bg-transparent w-full rounded-r-md border-none pr-[16px] pl-2 py-[10px] outline-none;
 	}
-	.form-phone-input select:focus,
-	.form-phone-input input:focus {
-		@apply ring-primary outline-none;
+	/* form phone input error state */
+	.form-phone-input.form-error {
+		@apply outline outline-error;
+		box-shadow: 0 0 0 4px rgba(255, 99, 71, 0.39);
 	}
 
 	/* Form textarea */
 	.form-textarea {
-		@apply bg-surface ring-border w-full rounded-md p-2 ring;
+		@apply bg-surface ring-border w-full rounded-[12px] p-[16px];
 	}
 	.form-textarea:focus {
-		@apply ring-primary outline-none;
+		@apply outline-primary bg-white;
+		box-shadow: 0 0 0 4px rgba(223, 110, 29, 0.39);
+	}
+	.form-textarea.form-error {
+		@apply outline outline-error;
+		box-shadow: 0 0 0 4px rgba(255, 99, 71, 0.39);
 	}
 }
 

@@ -5,7 +5,7 @@
 		action
 	}: {
 		message: string;
-		type?: 'success' | 'error' | 'info';
+		type?: 'success' | 'error' | 'info' | 'warning';
 		action?: {
 			label: string;
 			onClick: () => void;
@@ -15,21 +15,27 @@
 	const typeIcon = {
 		success: 'ix:success',
 		error: 'material-symbols:error-rounded',
-		info: 'material-symbols:info-outline'
+		info: 'material-symbols:info-outline',
+		warning: 'material-symbols:warning-rounded'
+	};
+
+	const typeText = {
+		success: 'text-success',
+		error: 'text-error',
+		info: 'text-info',
+		warning: 'text-warning'
 	};
 </script>
 
 <div
-	class="bg-surface border-border text-text-body flex items-center rounded-lg border p-4 text-sm shadow-lg"
+	class="bg-surface text-text-body flex items-center border border-border p-4 text-sm wrapper"
 >
 	<div class="flex items-center">
 		<iconify-icon
 			icon={typeIcon[type]}
 			width="24"
 			height="24"
-			class:text-success={type === 'success'}
-			class:text-error={type === 'error'}
-			class:text-blue-600={type === 'info'}
+			class={typeText[type]}
 			style="margin-right: 0.5rem"
 		></iconify-icon>
 	</div>
@@ -44,3 +50,11 @@
 		</button>
 	{/if}
 </div>
+
+
+<style>
+	.wrapper {
+		border-radius: 12px;
+		box-shadow: 0 4px 17.6px rgba(0, 0, 0, 0.08);
+	}
+</style>
