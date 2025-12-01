@@ -13,6 +13,7 @@
 	import appSettings from '$lib/stores/appSettings.svelte';
 	import ordersRepository from '$lib/repositories/orders.repository';
 	import type { PageProps } from './$types';
+	import Separator from '$lib/components/Separator.svelte';
 
 	const { data }: PageProps = $props();
 
@@ -93,6 +94,7 @@
 		loading = false;
 	});
 
+
 	const handleCheckout = async () => {
 		ordering = true;
 		errors = {
@@ -148,15 +150,11 @@
 		<p>Loading...</p>
 	{:else if cartDetails}
 		<div class="bg-background flex w-full max-w-2xl flex-col justify-center p-4">
-			<!-- <Breadcrumb
-				text={`Back to ${cartDetails.restaurantDetails.name}`}
-				href={`/restaurants/${cartDetails.restaurantDetails.slug}`}
-			/> -->
 			<h2 class="text-2xl font-bold">Checkout for {cartDetails.restaurantDetails.name}</h2>
 
-			<form>
-				<div class="mt-4">
-					<label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+			<form class="space-y-[24px] mt-[32px]">
+				<div>
+					<label for="name" class="form-label">Name</label>
 					<input
 						type="text"
 						id="name"
@@ -171,8 +169,8 @@
 						{/each}
 					{/if}
 				</div>
-				<div class="mt-4">
-					<label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+				<div>
+					<label for="address" class="form-label">Address</label>
 					<input
 						type="text"
 						id="address"
@@ -187,8 +185,8 @@
 						{/each}
 					{/if}
 				</div>
-				<div class="mt-4">
-					<label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+				<div>
+					<label for="phone" class="form-label">Phone</label>
 					<PhoneInput
 						bind:countryCode={deliveryDetails.phoneCode}
 						bind:phoneNumber={deliveryDetails.phone}
@@ -205,15 +203,14 @@
 				</div>
 
 				<div
-					class="mt-4"
 					aria-live="polite"
 					aria-atomic="true"
 					role="alert"
 					aria-relevant="all"
 					aria-label="Special Instructions"
 				>
-					<label for="specialInstructions" class="block text-sm font-medium text-gray-700">
-						Special Instructions
+					<label for="specialInstructions" class="form-label">
+						Special Instructions (Optional)
 					</label>
 
 					<textarea
@@ -232,34 +229,35 @@
 					{/if}
 				</div>
 
-				<div class="bg-surface mt-4 p-4 text-sm">
+				<div class="bg-white py-[24px] px-[20px] text-sm mt-[60px] rounded-[12px] border border-[#f1f1f1]">
 					<ul class="w-full">
 						{#each cartDetails.items as item, index (index)}
-							<li class="flex justify-between border-b p-2">
-								<span>{item.name}</span>
-								<span
-									>{item.quantity} x {appSettings.formatPrice(
+							<li class="flex justify-between p-2">
+								<span class="text-text-muted uppercase">{item.name}</span>
+								<span>
+									{item.quantity} x {appSettings.formatPrice(
 										item.discount_price || item.price
-									)}</span
-								>
+									)}
+								</span>
 							</li>
 						{/each}
 					</ul>
-					<ul class="mt-4 w-full space-y-2 px-2">
+					<Separator py="32px" variant="dashed" color="#DADADA" />
+					<ul class="w-full space-y-2 px-2">
 						<li class="flex justify-between">
-							<span>Sub-Total:</span>
+							<span class="text-text-muted uppercase">Sub-Total:</span>
 							<span>{appSettings.formatPrice(cartDetails.total)}</span>
 						</li>
 						<li class="flex justify-between">
-							<span>Delivery Fee:</span>
+							<span class="text-text-muted uppercase">Delivery Fee:</span>
 							<span>{appSettings.formatPrice(appSettings.deliveryFee)}</span>
 						</li>
 						<li class="flex justify-between">
-							<span>Service Fee:</span>
+							<span class="text-text-muted uppercase">Service Fee:</span>
 							<span>{appSettings.formatPrice(appSettings.serviceCharge)}</span>
 						</li>
 						<li class="flex justify-between">
-							<span>Total:</span>
+							<span class="text-text-muted uppercase">Total:</span>
 							<span
 								>{appSettings.formatPrice(
 									cartDetails.total +
@@ -271,7 +269,7 @@
 					</ul>
 				</div>
 				<button
-					class="btn mt-4 w-full"
+					class="btn w-full rounded-full"
 					onclick={async (event) => {
 						event.preventDefault();
 						// Handle checkout logic here

@@ -7,6 +7,7 @@
 	<div class=" text-[#585858] space-y-4">
 		<p>Follow Us</p>
 		<div class="flex space-x-4">
+			<!-- TODO: Add actual social media links -->
 			<a href="#" class="social-icon">
 				<img src="/icons/ig.svg" alt="Instagram">
 			</a>

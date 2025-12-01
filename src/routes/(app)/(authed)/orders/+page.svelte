@@ -1,5 +1,7 @@
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';
+	import Separator from '$lib/components/Separator.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
 	import type { PageProps } from './$types';
 
 	const {data}: PageProps = $props();
@@ -9,86 +11,71 @@
 
 <Seo title="My Orders - ChowBenin" description="View and manage your shopping carts." />
 
-{#if (orders && orders.length > 0)}
-		<div class=" grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-			{#each orders as order (order.id)}
-				<div class="bg-surface border-border flex flex-col gap-4 rounded-lg border p-4 shadow-md">
-					<div class="">
-						<h2 class="text-lg font-bold">{order.restaurant.name}</h2>
+<div class="py-[20px]">
+	<h3 class="text-[20px] font-extrabold">
+		My Orders {#if orders && orders.length > 0}<span class="text-text-muted">({orders.length})</span>{/if}
+	</h3>
+</div>
 
-						<p class="mt-1 text-sm">
+{#if (orders && orders.length > 0)}
+		<div class="mt-[8px] grid grid-cols-1 gap-[24px] md:grid-cols-2 lg:grid-cols-3">
+			{#each orders as order (order.id)}
+				<div class="border-border flex flex-col rounded-lg border bg-[#fafafa] p-[20px]">
+					<div class="flex items-center gap-[8px] mb-[30px]">
+						<img
+							src={order.restaurant.logo}
+							alt={order.restaurant.name}
+							class="h-[32px] w-[32px] rounded-full object-cover"
+						/>
+						<h2 class="text-lg font-extrabold">{order.restaurant.name}</h2>
+					</div>
+
+					<div class="space-y-[24px]">
+						<div class="flex flex-col rounded-[7px] bg-white p-[12px]">
+							<ul class="space-y-2 text-sm">
+								<li class="flex items-center justify-between">
+									<span>Sub-Total:</span>
+									<span>{appSettings.formatPrice(order.total_price)}</span>
+								</li>
+								<Separator py="16px" />
+								<li class="flex items-center justify-between">
+									<span>Delivery Fee:</span>
+									<span>{appSettings.formatPrice(order.delivery_fee)}</span>
+								</li>
+								{#if order.service_charge > 0}
+									<Separator py="16px" />
+									<li class="flex items-center justify-between">
+										<span>Service Charge:</span>
+										<span>{appSettings.formatPrice(order.service_charge)}</span>
+									</li>
+								{/if}
+							</ul>
+						</div>
+
+						<!-- Total -->
+						<div class="flex items-center justify-between px-[12px]">
+							<span class=" font-semibold">Total:</span>
+							<span class="font-semibold">
+								{appSettings.formatPrice(order.total)}
+							</span>
+						</div>
+
+						<div>
+							<a href="/orders/{order.id}" class="btn rounded-full btn-primary block text-center">
+								{order.payment_status === 'pending' ? 'Pay Now' : 'View Order'}
+							</a>
+						</div>
+
+						<p class="text-sm text-center text-text-muted">
 							{order.order_status === 'delivered' ? 'Delivered' : 'Delivering'} to
 							<span class="font-semibold">{order.address}</span>
 						</p>
 					</div>
-
-					<!-- Papered color background -->
-					<div class="flex flex-col gap-2 rounded-lg bg-gray-100 p-2">
-						<h3 class="text-md font-semibold">Order Details:</h3>
-						<ul class="space-y-2 text-sm font-semibold">
-							<li class="span flex items-center justify-between">
-								<span>Sub-Total:</span> <span>{order.total_price} XOF</span>
-							</li>
-							<hr />
-
-							<li class="span flex items-center justify-between">
-								<span>Delivery Fee:</span> <span>{order.delivery_fee} XOF</span>
-							</li>
-							<hr />
-
-							{#if order.service_charge > 0}
-								<li class="span flex items-center justify-between">
-									<span>Service Charge:</span> <span>{order.service_charge} XOF</span>
-								</li>
-								<hr />
-							{/if}
-							<li class="span flex items-center justify-between">
-								<span>Total:</span> <span>{order.total} XOF</span>
-							</li>
-						</ul>
-					</div>
-
-					<div>
-						<a
-							href="/orders/{order.id}"
-							class="btn flex items-center justify-center text-sm"
-						>
-							{#if order.payment_status === 'pending'}
-								Pay Now
-								<iconify-icon icon="ic:round-play-arrow" width="16" height="16"></iconify-icon>
-							{:else}
-								View Order
-								<iconify-icon icon="ic:round-play-arrow" width="16" height="16"></iconify-icon>
-							{/if}
-						</a>
-					</div>
-
-					<!-- Total -->
-					<!-- <div class="flex items-center justify-between">
-							<span class=" font-semibold">Total:</span>
-							<span class="font-semibold">
-								XOF
-								{cart.carts[key].total}
-							</span>
-						</div>
-						<div>
-							<a href="/checkout?restaurant={key}" class="btn btn-primary mt-2 block text-center">
-								Checkout
-							</a>
-							<button
-								onclick={() => {
-									cart.deleteCart(key);
-								}}
-								class="link hover:text-primary mt-2 block w-full text-center text-sm"
-							>
-								Clear Cart
-							</button>
-						</div> -->
 				</div>
 			{/each}
 		</div>
 {:else}
-	<div class="flex h-[500px] flex-col items-center justify-center">
+	<div class="flex min-h-[500px] flex-col items-center justify-center">
 		<p class="mt-2 text-lg font-semibold">No Orders Found</p>
 		<p class="text-sm text-gray-500">You have no orders yet.</p>
 		<a href="/" class="btn mt-4">Browse Restaurants</a>

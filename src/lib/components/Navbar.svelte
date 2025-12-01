@@ -7,6 +7,7 @@
 	import { debounce } from '$lib/utils/helpers';
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
+	import { page } from '$app/stores';
 
 	let {
 		authNav = false,
@@ -27,6 +28,13 @@
 		dropdownOpen = !dropdownOpen;
 	};
 
+	const resetScrollState = () => {
+		lastScrollY = window.scrollY;
+		isScrollingDown = false;
+		isNavbarElevated = true;
+		showSearch = showSearchButton;
+	};
+
 	const handleScroll = () => {
 		const currentScrollY = window.scrollY;
 		
@@ -42,11 +50,15 @@
 		}
 	};
 
+	// Reset scroll state when page changes
+	$effect(() => {
+		$page.url.pathname;
+		resetScrollState();
+	});
+
 	onMount(() => {
-		// Set initial values
 		lastScrollY = window.scrollY;
 		
-		// Add scroll event listener with debouncing for better performance
 		const debouncedHandleScroll = debounce(handleScroll, 10);
 		window.addEventListener('scroll', debouncedHandleScroll);
 		
@@ -102,7 +114,7 @@
 					</button>
 					{#if dropdownOpen && auth.currentUser}
 						<div
-							class=" absolute right-0 z-10 mt-2 w-48 rounded-md bg-white shadow-lg focus:outline-none"
+							class=" absolute right-0 z-10 mt-2 w-48 rounded-[12px] bg-white shadow-lg focus:outline-none"
 							role="menu"
 							aria-orientation="vertical"
 							aria-labelledby="user-menu"

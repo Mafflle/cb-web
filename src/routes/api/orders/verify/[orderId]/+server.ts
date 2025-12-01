@@ -55,7 +55,6 @@ export const POST: RequestHandler = async ({ params, locals, request, fetch }) =
   const verifyData = await verifyResponse.json();
 
   if (verifyData.status) {
-    console.log('Payment verification data:', verifyData.data);
     if (verifyData.data.status === 'success') {
       const { exchange_rate: exchangeRate } = await internalSettingsRepository.getInternalSettings(supabase);
       const amountInNaira = convertAmount(order.total, exchangeRate);
