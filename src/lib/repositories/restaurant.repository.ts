@@ -75,12 +75,37 @@ const createRepo = () => {
     return data;
   }
 
+  const searchAll = async (supabase: SupabaseClient<Database>, query: string): Promise<{
+    restaurants: Restaurant[];
+    items: (Tables<'items'> & { restaurant: Pick<Restaurant, 'id' | 'name' | 'slug' | 'logo'> | null })[];
+  }> => {
+    const { data: restaurantData, error: restaurantError } = await supabase
+      .from('restaurant')
+      .select('*')
+      .ilike('name', `%${query}%`);
+    
+    if (restaurantError) throw restaurantError;
+
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('items')
+      .select('*, restaurant:restaurant_id(id, name, slug, logo)')
+      .ilike('name', `%${query}%`);
+    
+    if (itemsError) throw itemsError;
+
+    return {
+      restaurants: restaurantData as Restaurant[],
+      items: itemsData as (Tables<'items'> & { restaurant: Pick<Restaurant, 'id' | 'name' | 'slug' | 'logo'> | null })[]
+    };
+  }
+
   return {
     getAll,
     getFeatured,
     getBySlug,
     getById,
     search,
+    searchAll,
     getItemsByRestaurantId,
     getFeaturedItemsByRestaurantId
   }
