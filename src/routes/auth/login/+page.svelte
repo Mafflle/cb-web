@@ -132,7 +132,10 @@
 				loading = false;
 				return;
 			}
-
+			showToast({
+				type: 'success',
+				message: 'Welcome to ChowBenin!'
+			});
 			goto(redirectTo);
 			await auth.refresh();
 		} catch (err) {
