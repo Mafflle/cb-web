@@ -18,7 +18,7 @@
 	import userStore from '$lib/stores/user.svelte';
 	import auth from '$lib/stores/auth.svelte';
 	import { goto } from '$app/navigation';
-	import { showToast } from '../../../../lib/utils/toaster.svelte';
+	import { showToast } from '$lib/utils/toaster.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -204,12 +204,13 @@
 				<div class="mt-6">
 					{#if items.length > 0}
 						<div
-							class="grid grid-cols-1 gap-x-[8px] gap-y-5 md:grid-cols-2 md:gap-x-[10px] lg:grid-cols-3 lg:gap-x-[16px]"
+							class="grid grid-cols-1 gap-x-[8px] gap-y-5 md:grid-cols-2 md:gap-x-10"
 						>
 							{#each items as item, index (index)}
-								<MenuItemCard {item} {index} {restaurant} {cartItems} />
-
-								<Separator py="36px" />
+								<div>
+									<MenuItemCard {item} {index} {restaurant} {cartItems} />
+									<Separator py="36px" />
+								</div>
 							{/each}
 						</div>
 					{:else}
