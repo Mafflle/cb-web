@@ -100,37 +100,50 @@
 						</span>
 					{/if}
 				</a>
-				<div class="relative">
-					<button
-						onclick={auth.currentUser ? toggleDropdown : async () => await goto('/auth/login')}
-						class="rounded-full cursor-pointer bg-surface p-[10px]"
-						aria-haspopup="true"
-						aria-expanded={dropdownOpen}
-						aria-label="User menu"
-					>
-						<img src="/icons/user.svg" alt="" loading="lazy" width="20" height="20" />
-					</button>
-					{#if dropdownOpen && auth.currentUser}
-						<div
-							class=" absolute right-0 z-10 mt-2 w-48 rounded-[12px] bg-white shadow-lg focus:outline-none"
-							role="menu"
-							aria-orientation="vertical"
-							aria-labelledby="user-menu"
-							use:clickOutside
-							onclickoutside={() => (dropdownOpen = false)}
+
+				{#if auth.currentUser}
+					<div class="relative">
+						<button
+							onclick={toggleDropdown}
+							class="rounded-full cursor-pointer bg-surface p-[10px]"
+							aria-haspopup="true"
+							aria-expanded={dropdownOpen}
+							aria-label="User menu"
 						>
-							<a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-								>Profile</a
+							<img src="/icons/user.svg" alt="" loading="lazy" width="20" height="20" />
+						</button>
+						{#if dropdownOpen}
+							<div
+								class=" absolute right-0 z-10 mt-2 w-48 rounded-[12px] bg-white shadow-lg focus:outline-none"
+								role="menu"
+								aria-orientation="vertical"
+								aria-labelledby="user-menu"
+								use:clickOutside
+								onclickoutside={() => (dropdownOpen = false)}
 							>
-							<a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-								>Orders</a
-							>
-							<div class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-								<LogoutButton />
+								<a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+									>Profile</a
+								>
+								<a href="/favorites" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+									>Favorites</a
+								>
+								<a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+									>Orders</a
+								>
+								<div class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									<LogoutButton />
+								</div>
 							</div>
-						</div>
-					{/if}
-				</div>
+						{/if}
+					</div>
+				{:else}
+					<a
+						href="/auth/login"
+						class="btn py-[10px] text-sm font-extrabold"
+					>
+						Login
+					</a>
+				{/if}
 			</div>
 		{/if}
 	</nav>
