@@ -23,6 +23,7 @@
 	let isNavbarElevated = $state(true);
 	let showSearch = $state(showSearchButton);
 	let lastScrollY = $state(0);
+	let scrollDirection = $state<'up' | 'down' | null>(null);
 
 	const toggleDropdown = () => {
 		dropdownOpen = !dropdownOpen;
@@ -33,19 +34,36 @@
 		isScrollingDown = false;
 		isNavbarElevated = true;
 		showSearch = showSearchButton;
+		scrollDirection = null;
 	};
 
 	const handleScroll = () => {
 		const currentScrollY = window.scrollY;
+		const scrollDelta = currentScrollY - lastScrollY;
 		
-		if (Math.abs(currentScrollY - lastScrollY) > 5) {
-			isScrollingDown = currentScrollY > lastScrollY && currentScrollY > 50;
-			
-			isNavbarElevated = !isScrollingDown;
-			showSearch = showSearchButton && !isScrollingDown;
-			
-			lastScrollY = currentScrollY;
+		const threshold = 10;
+		
+		if (scrollDelta > threshold) {
+			scrollDirection = 'down';
+		} else if (scrollDelta < -threshold) {
+			scrollDirection = 'up';
 		}
+		
+		if (scrollDirection && currentScrollY > 50) {
+			const newIsScrollingDown = scrollDirection === 'down';
+			
+			if (isScrollingDown !== newIsScrollingDown) {
+				isScrollingDown = newIsScrollingDown;
+				isNavbarElevated = !isScrollingDown;
+				showSearch = showSearchButton && !isScrollingDown;
+			}
+		} else if (currentScrollY <= 50) {
+			isScrollingDown = false;
+			isNavbarElevated = true;
+			showSearch = showSearchButton;
+		}
+		
+		lastScrollY = currentScrollY;
 	};
 
 	$effect(() => {
@@ -57,8 +75,8 @@
 	onMount(() => {
 		lastScrollY = window.scrollY;
 		
-		const debouncedHandleScroll = debounce(handleScroll, 10);
-		window.addEventListener('scroll', debouncedHandleScroll);
+		const debouncedHandleScroll = debounce(handleScroll, 16);
+		window.addEventListener('scroll', debouncedHandleScroll, { passive: true });
 		
 		return () => {
 			window.removeEventListener('scroll', debouncedHandleScroll);

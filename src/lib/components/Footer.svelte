@@ -1,43 +1,50 @@
-<footer class="bg-[#FCF1E8] py-[40px] px-[20px] text-text-body space-y-[80px]">
-	<div class="space-y-[20px]">
-		<img src="/images/wordmark-logo.svg" alt="Chowbenin Logo" />
-		<p class="text-[14px] text-[#585858]">© 2025 ChowBenin. All rights reserved</p>
-	</div>
+<footer class="bg-[#FCF1E8] py-[24px] px-[20px] text-text-body space-y-[24px]">
+	<div class="flex items-center justify-between">
+		<div class="space-y-[8px]">
+			<img src="/images/wordmark-logo.svg" alt="Chowbenin Logo" class="h-[24px]" />
+			<p class="text-[12px] text-[#585858]">© 2025 ChowBenin. All rights reserved</p>
+		</div>
 
-	<div class=" text-[#585858] space-y-4">
-		<p>Follow Us</p>
-		<div class="flex space-x-4">
+		<div class="flex space-x-3">
 			<!-- TODO: Add actual social media links -->
-			<a href="#" class="social-icon">
-				<img src="/icons/ig.svg" alt="Instagram">
+			<a href="#" class="social-icon" aria-label="Instagram">
+				<img src="/icons/ig.svg" alt="" width="16" height="16">
 			</a>
-			<a href="#" class="social-icon">
-				<img src="/icons/x.svg" alt="X (formerly Twitter)">
+			<a href="#" class="social-icon" aria-label="X (formerly Twitter)">
+				<img src="/icons/x.svg" alt="" width="16" height="16">
 			</a>
-			<a href="#" class="social-icon">
-				<img src="/icons/tiktok.svg" alt="TikTok">
+			<a href="#" class="social-icon" aria-label="TikTok">
+				<img src="/icons/tiktok.svg" alt="" width="16" height="16">
 			</a>
 		</div>
 	</div>
 
-	<div class="space-y-[20px] text-[#585858]">
-		<a href="#" class="legal-link">Privacy Policy</a>
-		<a href="#" class="legal-link">Terms of Service</a>
-		<a href="#" class="legal-link">Customer Support</a>
+	<div class="flex flex-wrap gap-x-[16px] gap-y-[8px] text-[#585858]">
+		<a href="/legal/privacy-policy" class="legal-link">Privacy Policy</a>
+		<span class="text-[#ccc]">•</span>
+		<a href="/legal/terms-of-service" class="legal-link">Terms of Service</a>
+		<span class="text-[#ccc]">•</span>
+		<a href="/legal/refund-policy" class="legal-link">Refund Policy</a>
+		<span class="text-[#ccc]">•</span>
+		<a href="/legal/delivery-policy" class="legal-link">Delivery Policy</a>
+		<span class="text-[#ccc]">•</span>
+		<a href="mailto:oluwaseyifunmi@mafflle.com" class="legal-link">Support</a>
 	</div>
 </footer>
 
 
 <style>
 	.social-icon {
-		padding: 12px;
+		padding: 8px;
 		background-color: #F5D2B9;
 		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.legal-link {
-		display: flex;
-		font-size: 14px;
+		font-size: 12px;
 		text-decoration: underline;
 	}
 </style>
