@@ -7,6 +7,14 @@ export default defineConfig({
 		tailwindcss(),
 		sveltekit(),
 	],
+	server: {
+		allowedHosts: [
+			'.ngrok-free.app',
+			'.ngrok.io',
+			'localhost',
+			'.local'
+		]
+	},
 	preview: {
 		host: '0.0.0.0',
 		allowedHosts: [

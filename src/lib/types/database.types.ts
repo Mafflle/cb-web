@@ -413,6 +413,14 @@ export type Database = {
         Args: { order_data: Json; user_id: string }
         Returns: string
       }
+      update_payment_status: {
+        Args: {
+          p_order_id: string
+          p_status: string
+          p_transaction_ref: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       order_status:
