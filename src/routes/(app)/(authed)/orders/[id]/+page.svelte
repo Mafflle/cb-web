@@ -12,14 +12,12 @@
 	import type { RealtimeChannel } from '@supabase/supabase-js';
 	import Seo from '$lib/components/Seo.svelte';
 	import { enhance } from '$app/forms';
-	import type PaystackPop from '@paystack/inline-js';
 
 	const { data }: PageProps = $props();
 
 	let { supabase } = $derived(data);
 	let { order } = $state(data);
 	let processingPayment = $state(false);
-	let transactionRef: string | null = $derived(null);
 
 	let orderSub: RealtimeChannel | null = null;
 

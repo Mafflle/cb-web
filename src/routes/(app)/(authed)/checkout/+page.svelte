@@ -12,6 +12,7 @@
 	import cart from '$lib/stores/cart.svelte';
 	import appSettings from '$lib/stores/appSettings.svelte';
 	import ordersRepository from '$lib/repositories/orders.repository';
+	import restaurantRepository from '$lib/repositories/restaurant.repository';
 	import type { PageProps } from './$types';
 	import Separator from '$lib/components/Separator.svelte';
 
@@ -19,14 +20,10 @@
 
 	let { supabase, session } = $derived(data);
 
-	const orderChargeDetails = $state({
-		deliveryFee: 700,
-		serviceCharge: 100
-	});
-
 	let restaurantId = page.url.searchParams.get('restaurant');
 	let cartDetails: any = $state(null);
 	let loading = $state(true);
+	let pricesChanged = $state(false);
 	let errors = $state<any>({
 		name: null,
 		address: null,
@@ -90,10 +87,74 @@
 		if (!cartDetails) {
 			showToast({ message: 'There is no cart for this restaurant', type: 'error' });
 			goto('/');
+			return;
 		}
+
+		// Validate prices haven't changed since items were added to cart
+		await validateCartPrices();
+
 		loading = false;
 	});
 
+	// Check if item prices have changed and update cart if needed
+	const validateCartPrices = async () => {
+		if (!cartDetails || !restaurantId) return;
+
+		try {
+			const currentItems = await restaurantRepository.getItemsByRestaurantId(
+				supabase,
+				restaurantId
+			);
+
+			let hasChanges = false;
+			let newTotal = 0;
+
+			const updatedItems = cartDetails.items.map((cartItem: any) => {
+				const currentItem = currentItems.find((item) => item.id === cartItem.id);
+
+				if (!currentItem) {
+					// Item no longer exists
+					hasChanges = true;
+					return null;
+				}
+
+				const currentPrice = currentItem.discount_price || currentItem.price;
+				const cartPrice = cartItem.discount_price || cartItem.price;
+
+				if (currentPrice !== cartPrice) {
+					hasChanges = true;
+					// Update cart item with new price
+					const updatedItem = {
+						...cartItem,
+						price: currentItem.price,
+						discount_price: currentItem.discount_price
+					};
+					newTotal += currentPrice * cartItem.quantity;
+					return updatedItem;
+				}
+
+				newTotal += cartPrice * cartItem.quantity;
+				return cartItem;
+			}).filter(Boolean);
+
+			if (hasChanges) {
+				pricesChanged = true;
+				// Update cartDetails with new prices
+				cartDetails = {
+					...cartDetails,
+					items: updatedItems,
+					total: newTotal
+				};
+
+				showToast({
+					message: 'Some item prices have changed. Please review your cart.',
+					type: 'info'
+				});
+			}
+		} catch (error) {
+			console.error('Error validating cart prices:', error);
+		}
+	};
 
 	const handleCheckout = async () => {
 		ordering = true;
@@ -117,7 +178,11 @@
 					price: item.discount_price || item.price
 				}))
 			};
-			let order = await ordersRepository.placeOrder(supabase, dataToSend, session?.user.id as string);
+			let order = await ordersRepository.placeOrder(
+				supabase,
+				dataToSend,
+				session?.user.id as string
+			);
 			cart.deleteCart(restaurantId as string);
 			showToast({ message: 'Order placed successfully', type: 'success' });
 			if (order?.payment_status === 'pending') {
@@ -147,12 +212,32 @@
 
 <div class="flex h-full w-full flex-col items-center justify-center">
 	{#if loading}
-		<p>Loading...</p>
+		<div class="flex flex-col items-center justify-center gap-2 py-10">
+			<iconify-icon icon="eos-icons:loading" width="32" height="32" class="text-primary"
+			></iconify-icon>
+			<p class="text-text-muted">Loading checkout...</p>
+		</div>
 	{:else if cartDetails}
 		<div class="bg-background flex w-full max-w-2xl flex-col justify-center p-4">
 			<h2 class="text-2xl font-bold">Checkout for {cartDetails.restaurantDetails.name}</h2>
 
-			<form class="space-y-[24px] mt-[32px]">
+			{#if pricesChanged}
+				<div
+					class="mt-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
+				>
+					<iconify-icon icon="mdi:alert-circle" width="24" height="24" class="text-amber-600"
+					></iconify-icon>
+					<div>
+						<p class="font-semibold text-amber-800">Prices Updated</p>
+						<p class="text-sm text-amber-700">
+							Some item prices have changed since you added them to your cart. The updated prices
+							are shown below.
+						</p>
+					</div>
+				</div>
+			{/if}
+
+			<form class="mt-[32px] space-y-[24px]">
 				<div>
 					<label for="name" class="form-label">Name</label>
 					<input
@@ -229,15 +314,15 @@
 					{/if}
 				</div>
 
-				<div class="bg-white py-[24px] px-[20px] text-sm mt-[60px] rounded-[12px] border border-[#f1f1f1]">
+				<div
+					class="mt-[60px] rounded-[12px] border border-[#f1f1f1] bg-white px-[20px] py-[24px] text-sm"
+				>
 					<ul class="w-full">
 						{#each cartDetails.items as item, index (index)}
 							<li class="flex justify-between p-2">
 								<span class="text-text-muted uppercase">{item.name}</span>
 								<span>
-									{item.quantity} x {appSettings.formatPrice(
-										item.discount_price || item.price
-									)}
+									{item.quantity} x {appSettings.formatPrice(item.discount_price || item.price)}
 								</span>
 							</li>
 						{/each}
@@ -258,13 +343,11 @@
 						</li>
 						<li class="flex justify-between">
 							<span class="text-text-muted uppercase">Total:</span>
-							<span
-								>{appSettings.formatPrice(
-									cartDetails.total +
-										orderChargeDetails.deliveryFee +
-										orderChargeDetails.serviceCharge
-								)}</span
-							>
+							<span>
+								{appSettings.formatPrice(
+									cartDetails.total + appSettings.deliveryFee + appSettings.serviceCharge
+								)}
+							</span>
 						</li>
 					</ul>
 				</div>
