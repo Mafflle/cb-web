@@ -2,8 +2,10 @@ import ordersRepository from '$lib/repositories/orders.repository';
 import { error, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import internalSettingsRepository from '$lib/repositories/internal_settings.repository';
-import { PRIVATE_PAYSTACK_SECRET_KEY } from '$env/static/private';
-import { convertAmount } from '../../../../../lib/utils/helpers';
+import { convertAmount } from '$lib/utils/helpers';
+import { paymentMethods } from '$lib/utils/constants';
+import { paystackService } from '$lib/services/paystack.service';
+import momoService from '$lib/services/momo.service';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	try {
@@ -20,16 +22,22 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 };
 
-const generateReference = () => {
-  const timestamp = Date.now().toString(36);
-  const randomString = Math.random().toString(36).substring(2, 8);
-  return `${timestamp}-${randomString}`.toUpperCase();
-};
 
 export const actions: Actions = {
 
 
-	pay: async ({ params, locals }) => {
+	pay: async ({ params, locals, request }) => {
+		const formData = await request.formData();
+		const paymentMethod = formData.get('payment_method')?.toString().trim();
+
+		if (!paymentMethod || typeof paymentMethod !== 'string') {
+			throw error(400, { message: 'Payment method is required' });
+		}
+
+		if (Object.values(paymentMethods).indexOf(paymentMethod) === -1) {
+			throw error(400, { message: 'Invalid payment method' });
+		}
+
 		if (!locals.user) {
 			throw error(401, { message: 'Unauthorized' });
 		}
@@ -47,47 +55,62 @@ export const actions: Actions = {
 				locals.supabase
 			);
 
-			const amountInNaira = convertAmount(order!.total, exchangeRate);
-      const reference = generateReference();
+			if (paymentMethod === paymentMethods.PAYSTACK) {
+				const amountInNaira = convertAmount(order!.total, exchangeRate);
 
-			const response = await fetch('https://api.paystack.co/transaction/initialize', {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${PRIVATE_PAYSTACK_SECRET_KEY}`,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					email: locals.user.email,
-					amount: amountInNaira * 100, 
+				const { data, reference } = await paystackService.initiatePayment(
+					amountInNaira,
+					locals.user.email as string
+				);
+				
+				const { error: paymentRefError } = await locals.supabase.from('payments').insert({
+					order_id: orderId,
+					amount: amountInNaira,
 					currency: 'NGN',
-					reference,
-				})
-			});
+					payment_method: 'paystack',
+					payment_status: 'pending',
+					transaction_reference: reference
+				});
+	
+				if (paymentRefError) {
+					console.error('Error creating payment reference:', paymentRefError);
+					throw error(500, 'Failed to create payment reference');
+				}
+				
+				return { data, success: true };
+			} else if (paymentMethod === paymentMethods.MOMO) {
+				const momoPhoneNumber = formData.get('momo_phone')?.toString().trim().replace(/\s+/g, '');
+				if (!momoPhoneNumber) {
+					throw error(400, 'Mobile Money phone number is required for MoMo payments');
+				}
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error initializing Paystack transaction:', errorData);
-        throw error(response.status, errorData.message || 'Failed to initialize transaction');
-      }
+				const { reference } = await momoService.requestToPay(
+					{
+						amount: order!.total,
+						currency: 'XOF',
+						callbackUrl: 'https://dev.chowbenin.com/api/momo/webhook',
+						payerPhoneNumber: momoPhoneNumber
+					}
+				);
 
-			const data = await response.json();
+				const { error: paymentRefError } = await locals.supabase.from('payments').insert({
+					order_id: orderId,
+					amount: order!.total,
+					currency: 'XOF',
+					payment_method: 'momo',
+					payment_status: 'pending',
+					transaction_reference: reference
+				});
+	
+				if (paymentRefError) {
+					console.error('Error creating MoMo payment reference:', paymentRefError);
+					throw error(500, 'Failed to create MoMo payment reference');
+				}
 
-      // Create a payment reference record in the database
-      const { error: paymentRefError } = await locals.supabase.from('payments').insert({
-				order_id: orderId,
-				amount: amountInNaira,
-				currency: 'NGN',
-				payment_method: 'paystack',
-				payment_status: 'pending',
-				transaction_reference: reference
-			});
-
-      if (paymentRefError) {
-        console.error('Error creating payment reference:', paymentRefError);
-        throw error(500, 'Failed to create payment reference');
-      }
-      
-      return { paystackData: data, success: true };
+				return { reference, success: true };
+			}
+			
+			throw error(400, 'Unsupported payment method');
 		} catch (err) {
 			console.error('Error processing payment:', err);
 			throw error(500, 'Internal Server Error');

@@ -1,11 +1,13 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
 import ordersRepository from "$lib/repositories/orders.repository";
-import { PRIVATE_PAYSTACK_SECRET_KEY } from "$env/static/private";
 import { convertAmount } from "$lib/utils/helpers";
 import { internalSettingsRepository } from '$lib/repositories/internal_settings.repository';
+import { paystackService } from "$lib/services/paystack.service";
+import { paymentMethods } from "$lib/utils/constants";
+import momoService from "$lib/services/momo.service";
 
 
-export const POST: RequestHandler = async ({ params, locals, request, fetch }) => {
+export const POST: RequestHandler = async ({ params, locals, request }) => {
   const { orderId } = params;
   const session = await locals.safeGetSession();
   const { supabase } = locals;
@@ -40,56 +42,67 @@ export const POST: RequestHandler = async ({ params, locals, request, fetch }) =
     return json({ error: "Payment not found for this order" }, { status: 404 });
   }
 
-  const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${transactionRef}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${PRIVATE_PAYSTACK_SECRET_KEY}`,
-      'Content-Type': 'application/json'
-    }
-  });
-
-  if (!verifyResponse.ok) {
-    return json({ success: false, error: "Failed to verify payment" }, { status: 502 });
-  }
-
-  const verifyData = await verifyResponse.json();
-
-  if (verifyData.status) {
-    if (verifyData.data.status === 'success') {
-      const { exchange_rate: exchangeRate } = await internalSettingsRepository.getInternalSettings(supabase);
-      const amountInNaira = convertAmount(order.total, exchangeRate);
-      const amountInKobo = amountInNaira * 100;
-      if (verifyData.data.amount !== amountInKobo) {
-        console.error('Amount mismatch:', { expected: amountInKobo, received: verifyData.data.amount });
-        return json({ success: false, error: "Payment amount does not match order amount" }, { status: 400 });
+  try {
+    if (payment.payment_method === paymentMethods.PAYSTACK) {
+      const verifyData = await paystackService.verifyPayment(transactionRef);
+    
+      if (verifyData.status) {
+        if (verifyData.data.status === 'success') {
+          const { exchange_rate: exchangeRate } = await internalSettingsRepository.getInternalSettings(supabase);
+          const amountInNaira = convertAmount(order.total, exchangeRate);
+          const amountInKobo = amountInNaira * 100;
+          if (verifyData.data.amount !== amountInKobo) {
+            console.error('Amount mismatch:', { expected: amountInKobo, received: verifyData.data.amount });
+            return json({ success: false, error: "Payment amount does not match order amount" }, { status: 400 });
+          }
+      
+          await ordersRepository.updatePaymentStatus(
+            supabase,
+            orderId,
+            transactionRef,
+            'paid'
+          )
+      
+          return json({ success: true, message: "Payment verified successfully" });
+        } else if (verifyData.data.status === 'pending') {
+          return json({ success: false, error: "Payment is still pending. Please complete the payment." }, { status: 400 });
+        }
+         else {
+          return json({ success: false, error: "Payment not successful" }, { status: 400 });
+        }
+      } else {
+        return json({ success: false, error: "Payment verification failed" }, { status: 502 });
       }
-  
-      const { error } = await supabase.rpc('update_payment_status', {
-        p_order_id: orderId,
-        p_transaction_ref: transactionRef,
-        p_status: 'paid'
-      });
-  
-      if (error) {
-        console.error('Failed to update payment status:', error);
-        return json({ success: false, error: "Failed to update payment status" }, { status: 500 });
+    } else if (payment.payment_method === paymentMethods.MOMO) {
+      const transactionStatus = await momoService.getTransactionStatus(transactionRef);
+
+      if (transactionStatus.status === 'SUCCESSFUL') {
+        const expectedAmount = order.total.toString();
+        if (transactionStatus.amount !== expectedAmount) {
+          console.error('Amount mismatch:', { expected: expectedAmount, received: transactionStatus.amount });
+          return json({ success: false, error: "Payment amount does not match order amount" }, { status: 400 });
+        }
+
+        await ordersRepository.updatePaymentStatus(
+          supabase,
+          orderId,
+          transactionRef,
+          'paid'
+        );
+
+        return json({ success: true, status: 'success', message: "Payment verified successfully" });
+      } else if (transactionStatus.status === 'PENDING') {
+        return json({ success: false, status: 'pending', error: "Payment is still pending. Please approve on your phone." }, { status: 400 });
+      } else if (transactionStatus.status === 'FAILED') {
+        return json({ success: false, status: 'failed', error: transactionStatus.reason || "Payment failed" }, { status: 400 });
+      } else {
+        return json({ success: false, error: "Unknown payment status" }, { status: 400 });
       }
-  
-      return json({ success: true, message: "Payment verified successfully" });
     } else {
-      const { error } = await supabase.rpc('update_payment_status', {
-        p_order_id: orderId,
-        p_transaction_ref: transactionRef,
-        p_status: 'failed'
-      });
-
-      if (error) {
-        console.error('Failed to update payment status to failed:', error);
-      }
-
-      return json({ success: false, error: "Payment not successful" }, { status: 400 });
+      return json({ success: false, error: "Unsupported payment method" }, { status: 400 });
     }
-  } else {
-    return json({ success: false, error: "Payment verification failed" }, { status: 502 });
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    return json({ success: false, error: "Internal server error during payment verification" }, { status: 500 });
   }
 }

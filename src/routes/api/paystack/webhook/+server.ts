@@ -5,9 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 import { json, type RequestHandler } from '@sveltejs/kit';
 import crypto from 'crypto';
 import { type Database } from '$lib/types/database.types';
+import ordersRepository from '$lib/repositories/orders.repository';
 
-// Paystack's IP addresses for webhook requests
-// See: https://paystack.com/docs/payments/webhooks/#ip-whitelisting
 const PAYSTACK_IPS = ['52.31.139.75', '52.49.173.169', '52.214.14.220'];
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
@@ -81,13 +80,9 @@ async function handleChargeSuccess(data: any) {
 		}
 	});
 
-	const { data: payment, error: fetchError } = await supabase
-		.from('payments')
-		.select('*')
-		.eq('transaction_reference', transactionRef)
-		.single();
+	const payment = await ordersRepository.getPaymentByTransactionRef(supabase, transactionRef);
 
-	if (fetchError || !payment) {
+	if (!payment) {
 		console.error('Payment record not found for ref:', transactionRef);
 		return;
 	}
@@ -107,16 +102,12 @@ async function handleChargeSuccess(data: any) {
 		return;
 	}
 
-	const { error: updateError } = await supabase.rpc('update_payment_status', {
-		p_order_id: payment.order_id as string,
-		p_transaction_ref: transactionRef,
-		p_status: 'paid'
-	});
-
-	if (updateError) {
-		console.error('Failed to update payment status:', updateError);
-		return;
-	}
+	await ordersRepository.updatePaymentStatus(
+		supabase,
+		payment.order_id as string,
+		transactionRef,
+		'paid'
+	);
 
 	console.log('Payment verified and updated:', transactionRef);
 }
@@ -139,16 +130,12 @@ async function handleChargeFailed(data: any) {
 		}
 	});
 
-	const { error } = await supabase.rpc('update_payment_status', {
-		p_order_id: data.metadata?.order_id || '',
-		p_transaction_ref: transactionRef,
-		p_status: 'failed'
-	});
-
-	if (error) {
-		console.error('Failed to update payment status to failed:', error);
-		return;
-	}
+	await ordersRepository.updatePaymentStatus(
+		supabase,
+		data.metadata?.order_id || '',
+		transactionRef,
+		'failed'
+	);
 
 	console.log('Payment marked as failed:', transactionRef);
 }

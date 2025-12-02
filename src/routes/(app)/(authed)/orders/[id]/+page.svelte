@@ -12,12 +12,124 @@
 	import type { RealtimeChannel } from '@supabase/supabase-js';
 	import Seo from '$lib/components/Seo.svelte';
 	import { enhance } from '$app/forms';
+	import { paymentMethods } from '$lib/utils/constants';
+	import { PUBLIC_IS_MOMO_SANDBOX } from '$env/static/public';
 
 	const { data }: PageProps = $props();
-
+	const isMomoSandbox = PUBLIC_IS_MOMO_SANDBOX === 'true';
 	let { supabase } = $derived(data);
 	let { order } = $state(data);
 	let processingPayment = $state(false);
+	let processingMomoPayment = $state(false);
+	let showPaymentOptions = $state(false);
+	let showMomoPhoneModal = $state(false);
+	let momoPhoneNumber = $state('');
+	let momoPhoneError = $state('');
+	let momoPhoneTouched = $state(false);
+	let momoFormRef: HTMLFormElement | null = $state(null);
+	let paymentDropdownRef: HTMLDivElement | null = $state(null);
+	let momoModalStep: 'phone' | 'confirm' = $state('phone');
+	let momoTransactionRef = $state('');
+	let verifyingMomoPayment = $state(false);
+	
+	let sandboxSimulation: 'success' | 'failed' = $state('success');
+
+	const validateMomoPhone = (value: string): string => {
+		const digitsOnly = value.replace(/\D/g, '');
+		if (!digitsOnly) {
+			return 'Phone number is required';
+		}
+		if (digitsOnly.length < 8) {
+			return 'Phone number must be 8 digits';
+		}
+		if (digitsOnly.length > 8) {
+			return 'Phone number must be exactly 8 digits';
+		}
+		return '';
+	};
+
+	const isMomoFormValid = $derived(() => {
+		const digitsOnly = momoPhoneNumber.replace(/\D/g, '');
+		return digitsOnly.length === 8;
+	});
+
+	const handleMomoPhoneInput = (e: Event) => {
+		const input = e.target as HTMLInputElement;
+		let digits = input.value.replace(/\D/g, '');
+		if (digits.length > 8) {
+			digits = digits.slice(0, 8);
+		}
+		let formatted = '';
+		for (let i = 0; i < digits.length; i++) {
+			if (i > 0 && i % 2 === 0) {
+				formatted += ' ';
+			}
+			formatted += digits[i];
+		}
+		momoPhoneNumber = formatted;
+		
+		if (momoPhoneTouched) {
+			momoPhoneError = validateMomoPhone(momoPhoneNumber);
+		}
+	};
+
+	const handleMomoPhoneBlur = () => {
+		momoPhoneTouched = true;
+		momoPhoneError = validateMomoPhone(momoPhoneNumber);
+	};
+
+	const verifyMomoPayment = async () => {
+		if (!momoTransactionRef) return;
+		
+		verifyingMomoPayment = true;
+		
+		try {
+			const { success: isPaid, status } = await ordersRepository.verifyOrderPayment(order.id, momoTransactionRef);
+
+			console.log({isPaid, status});
+			
+			if (isPaid) {
+				showToast({
+					message: 'Payment verified successfully!',
+					type: 'success'
+				});
+				closeMomoModal();
+			} else if (status === 'pending') {
+				showToast({
+					message: 'Payment not yet confirmed. Please complete the payment on your phone.',
+					type: 'error'
+				});
+			} else {
+				showToast({
+					message: 'Payment failed. Please try again.',
+					type: 'error'
+				});
+				closeMomoModal();
+			}
+		} catch (error) {
+			showToast({
+				message: 'Failed to verify payment. Please try again.',
+				type: 'error'
+			});
+		} finally {
+			verifyingMomoPayment = false;
+		}
+	};
+
+	function handleClickOutside(event: MouseEvent) {
+		if (paymentDropdownRef && !paymentDropdownRef.contains(event.target as Node)) {
+			showPaymentOptions = false;
+		}
+	}
+
+	$effect(() => {
+		if (showPaymentOptions) {
+			document.addEventListener('click', handleClickOutside);
+		}
+		return () => {
+			document.removeEventListener('click', handleClickOutside);
+		};
+	});
 
 	let orderSub: RealtimeChannel | null = null;
 
@@ -52,11 +164,12 @@
 
 	const enhanceNairaPayment: SubmitFunction = () => {
 		processingPayment = true;
+		showPaymentOptions = false;
 
 		return async ({ result }) => {
 			try {
 				if (result.type === 'success') {
-					const paystackData = result.data?.paystackData;
+					const paystackData = result.data?.data;
 					const accessCode = paystackData?.data?.access_code;
 	
 					if (!accessCode) {
@@ -86,8 +199,7 @@
 							processingPayment = false;
 						},
 						onSuccess: async (transaction: { reference: string }) => {
-							const isPaid = await ordersRepository.verifyOrderPayment(
-								supabase,
+							const {success: isPaid} = await ordersRepository.verifyOrderPayment(
 								order.id,
 								transaction.reference
 							);
@@ -126,7 +238,67 @@
 					message: 'An unexpected error occurred during payment. Please try again.',
 					type: 'error'
 				});
-				processingPayment = false;
+							processingPayment = false;
+			}
+		};
+	};
+
+	const openMomoModal = () => {
+		showPaymentOptions = false;
+		showMomoPhoneModal = true;
+		momoModalStep = 'phone';
+	};
+
+	const closeMomoModal = () => {
+		showMomoPhoneModal = false;
+		momoPhoneNumber = '';
+		momoPhoneError = '';
+		momoPhoneTouched = false;
+		momoModalStep = 'phone';
+		momoTransactionRef = '';
+		sandboxSimulation = 'success';
+	};
+
+	const submitMomoPayment = () => {
+		if (!isMomoSandbox && !momoPhoneNumber.trim()) {
+			showToast({
+				message: 'Please enter your Momo phone number',
+				type: 'error'
+			});
+			return;
+		}
+		momoFormRef?.requestSubmit();
+	};
+
+	const enhanceMomoPayment: SubmitFunction = () => {
+		processingMomoPayment = true;
+
+		return async ({ result }) => {
+			try {
+				if (result.type === 'success' && result.data?.reference) {
+					momoTransactionRef = result.data.reference;
+					
+					momoModalStep = 'confirm';
+					
+					showToast({
+						message: 'Payment request sent! Check your phone.',
+						type: 'success'
+					});
+				} else if (result.type === 'error' || result.type === 'failure') {
+					showMomoPhoneModal = false;
+					showToast({
+						message: 'Failed to initiate Momo payment. Please try again.',
+						type: 'error'
+					});
+				}
+			} catch (error) {
+				showMomoPhoneModal = false;
+				showToast({
+					message: 'Failed to initiate Momo payment. Please try again.',
+					type: 'error'
+				});
+			} finally {
+				processingMomoPayment = false;
 			}
 		};
 	};
@@ -212,21 +384,53 @@
 										</p>
 									</div>
 									{#if order.payment_status === 'pending'}
-										<form action="?/pay" method="POST" use:enhance={enhanceNairaPayment}>
+										<div class="relative" bind:this={paymentDropdownRef}>
 											<button
-												type="submit"
+												type="button"
+												onclick={() => showPaymentOptions = !showPaymentOptions}
 												class="btn btn-primary text-xs font-bold px-[16px] py-[8px] rounded-full flex items-center gap-[6px] whitespace-nowrap"
-												disabled={processingPayment}
+												disabled={processingPayment || processingMomoPayment}
 											>
-												{#if processingPayment}
+												{#if processingPayment || processingMomoPayment}
 													<span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
 													Processing
 												{:else}
 													Pay Now
-													<iconify-icon icon="mdi:arrow-right" width="14" height="14"></iconify-icon>
+													<iconify-icon icon="mdi:chevron-down" width="14" height="14" class="transition-transform {showPaymentOptions ? 'rotate-180' : ''}"></iconify-icon>
 												{/if}
 											</button>
-										</form>
+											
+											{#if showPaymentOptions}
+												<div class="absolute right-0 top-full mt-2 w-48 rounded-lg bg-white shadow-lg border border-gray-100 overflow-hidden z-10">
+													<form action="?/pay" method="POST" use:enhance={enhanceNairaPayment}>
+														<input type="hidden" name="payment_method" value={paymentMethods.PAYSTACK} />
+														<button
+															type="submit"
+															class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-3"
+															disabled={processingPayment}
+														>
+															<iconify-icon icon="mdi:currency-ngn" width="18" height="18" class="text-green-600"></iconify-icon>
+															<div>
+																<p class="font-medium">Pay with Naira</p>
+																<p class="text-xs text-text-muted">{appSettings.formatPrice(appSettings.getConvertedPrice(order.total), 'NGN')}</p>
+															</div>
+														</button>
+													</form>
+													<button
+														type="button"
+														onclick={openMomoModal}
+														class="w-full px-4 py-3 text-left text-sm hover:bg-[#FFF8E1] flex items-center gap-3 border-t border-gray-100"
+														disabled={processingMomoPayment}
+													>
+														<iconify-icon icon="mdi:cellphone" width="18" height="18" class="text-[#FFCB05]"></iconify-icon>
+														<div>
+															<p class="font-medium">Pay with Momo</p>
+															<p class="text-xs text-text-muted">{appSettings.formatPrice(order.total)}</p>
+														</div>
+													</button>
+												</div>
+											{/if}
+										</div>
 									{/if}
 								</div>
 							</div>
@@ -398,6 +602,7 @@
 				{#if order.payment_status === 'pending' || order.payment_status === 'failed'}
 					<div class="space-y-[12px]">
 						<form action="?/pay" class="w-full" method="POST" use:enhance={enhanceNairaPayment}>
+							<input type="hidden" name="payment_method" value={paymentMethods.PAYSTACK} />
 							<button class="btn btn-primary rounded-full w-full flex items-center justify-center" disabled={processingPayment}>
 								{#if processingPayment}
 									<span
@@ -412,8 +617,20 @@
 								{/if}
 							</button>
 						</form>
-						<button class="btn rounded-full w-full bg-[#f2f2f2] text-text-muted" disabled>
-							Pay With Momo (Coming Soon)
+						<button 
+							type="button"
+							onclick={openMomoModal}
+							class="btn rounded-full w-full bg-[#004F71] text-[#FFCB05] flex items-center justify-center" 
+							disabled={processingMomoPayment}
+						>
+							{#if processingMomoPayment}
+								<span
+									class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"
+								></span>
+								Processing...
+							{:else}
+								Pay With Momo ({appSettings.formatPrice(order.total)})
+							{/if}
 						</button>
 					</div>
 				{:else if order.payment_status === 'paid'}
@@ -428,7 +645,6 @@
 					</div>
 				{/if}
 
-				<!-- Refund Policy Notice -->
 				<p class="text-text-muted text-center text-xs mt-4">
 					Need help with your order? Check our
 					<a href="/legal/refund-policy" class="text-primary underline">Refund Policy</a>
@@ -438,3 +654,241 @@
 		</div>
 	{/if}
 </div>
+
+{#if showMomoPhoneModal}
+	<div 
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		onclick={(e) => { if (e.target === e.currentTarget && momoModalStep === 'phone') closeMomoModal(); }}
+		onkeydown={(e) => { if (e.key === 'Escape' && momoModalStep === 'phone') closeMomoModal(); }}
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="momo-modal-title"
+		tabindex="-1"
+	>
+		<div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl">
+			{#if momoModalStep === 'phone'}
+				<div class="flex items-center justify-between mb-4">
+					<h2 id="momo-modal-title" class="text-lg font-bold flex items-center gap-2">
+						<div class="w-8 h-8 rounded-full bg-[#FFCB05] flex items-center justify-center">
+							<iconify-icon icon="mdi:cellphone" width="18" height="18" class="text-[#004F71]"></iconify-icon>
+						</div>
+						Pay with Momo
+					</h2>
+					<button 
+						type="button" 
+						onclick={closeMomoModal}
+						class="p-1 rounded-full hover:bg-gray-100 transition-colors"
+						aria-label="Close modal"
+					>
+						<iconify-icon icon="mdi:close" width="20" height="20" class="text-gray-500"></iconify-icon>
+					</button>
+				</div>
+
+				<!-- Amount -->
+				<div class="bg-[#FFF8E1] rounded-lg p-3 mb-4">
+					<p class="text-sm text-gray-600">Amount to pay</p>
+					<p class="text-xl font-bold text-[#004F71]">{appSettings.formatPrice(order.total)}</p>
+				</div>
+
+				<!-- Form -->
+				<form 
+					action="?/pay" 
+					method="POST" 
+					use:enhance={enhanceMomoPayment}
+					bind:this={momoFormRef}
+					class="space-y-4"
+				>
+					<input type="hidden" name="payment_method" value={paymentMethods.MOMO} />
+					
+					{#if isMomoSandbox}
+						<input type="hidden" name="momo_phone" value={sandboxSimulation === 'success' ? '46733121322' : '46733123453'} />
+						
+						<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2">
+							<p class="text-xs text-amber-700 flex items-center gap-1.5">
+								<iconify-icon icon="mdi:test-tube" width="14" height="14"></iconify-icon>
+								<span class="font-medium">Sandbox Mode</span> - This is a test environment
+							</p>
+						</div>
+
+						<div class="flex flex-col gap-3 pt-2">
+							<button
+								type="submit"
+								disabled={processingMomoPayment}
+								onclick={() => sandboxSimulation = 'success'}
+								class="w-full py-3 px-4 rounded-full bg-green-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+							>
+								{#if processingMomoPayment && sandboxSimulation === 'success'}
+									<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
+									Processing...
+								{:else}
+									<iconify-icon icon="mdi:check-circle" width="20" height="20"></iconify-icon>
+									Simulate Success
+								{/if}
+							</button>
+							<button
+								type="submit"
+								disabled={processingMomoPayment}
+								onclick={() => sandboxSimulation = 'failed'}
+								class="w-full py-3 px-4 rounded-full bg-red-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:bg-red-700 transition-colors"
+							>
+								{#if processingMomoPayment && sandboxSimulation === 'failed'}
+									<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
+									Processing...
+								{:else}
+									<iconify-icon icon="mdi:close-circle" width="20" height="20"></iconify-icon>
+									Simulate Failure
+								{/if}
+							</button>
+							<button
+								type="button"
+								onclick={closeMomoModal}
+								class="w-full py-3 px-4 rounded-full border border-gray-200 font-medium hover:bg-gray-50 transition-colors text-text-muted"
+							>
+								Cancel
+							</button>
+						</div>
+					{:else}
+						<!-- Production Mode: Phone Number Input -->
+						<div>
+							<label for="momo_phone" class="form-label">
+								Momo Phone Number
+							</label>
+							<div 
+								class="form-phone-input border {momoPhoneError && momoPhoneTouched ? 'form-error' : ''}"
+								style="--tw-ring-color: #FFCB05;"
+							>
+								<span class="text-text-muted text-sm font-medium pl-[16px]">+229</span>
+								<input
+									type="tel"
+									id="momo_phone"
+									name="momo_phone"
+									value={momoPhoneNumber}
+									oninput={handleMomoPhoneInput}
+									onblur={handleMomoPhoneBlur}
+									placeholder="XX XX XX XX"
+									maxlength="11"
+									autocomplete="tel"
+								/>
+							</div>
+							{#if momoPhoneError && momoPhoneTouched}
+								<p class="text-xs text-error mt-1 flex items-center gap-1">
+									<iconify-icon icon="mdi:alert-circle" width="14" height="14"></iconify-icon>
+									{momoPhoneError}
+								</p>
+							{:else}
+								<p class="text-xs text-text-muted mt-1">Enter the 8-digit number linked to your Momo account</p>
+							{/if}
+						</div>
+
+						<div class="flex gap-3 pt-2">
+							<button
+								type="button"
+								onclick={closeMomoModal}
+								class="flex-1 py-3 px-4 rounded-full border border-gray-200 font-medium hover:bg-gray-50 transition-colors"
+							>
+								Cancel
+							</button>
+							<button
+								type="submit"
+								disabled={processingMomoPayment || !isMomoFormValid()}
+								class="flex-1 py-3 px-4 rounded-full bg-[#004F71] text-[#FFCB05] font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+							>
+								{#if processingMomoPayment}
+									<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
+									Processing...
+								{:else}
+									Pay Now
+								{/if}
+							</button>
+						</div>
+					{/if}
+				</form>
+			{:else}
+				<!-- Confirmation Step -->
+				<div class="text-center">
+					<!-- Animated Phone Icon -->
+					<div class="mb-6">
+						<div class="w-20 h-20 mx-auto rounded-full bg-[#FFF8E1] flex items-center justify-center animate-pulse">
+							<iconify-icon icon={isMomoSandbox ? "mdi:test-tube" : "mdi:cellphone-message"} width="40" height="40" class="text-[#FFCB05]"></iconify-icon>
+						</div>
+					</div>
+
+					<!-- Title -->
+					<h2 id="momo-modal-title" class="text-xl font-bold text-[#004F71] mb-2">
+						{isMomoSandbox ? 'Sandbox Payment Initiated' : 'Check Your Phone'}
+					</h2>
+
+					<!-- Instructions -->
+					<div class="space-y-3 mb-6">
+						<p class="text-text-muted text-sm">
+							A payment request of <span class="font-bold text-[#004F71]">{appSettings.formatPrice(order.total)}</span> has been sent{isMomoSandbox ? ' (sandbox mode)' : ' to your phone'}.
+						</p>
+						
+						{#if isMomoSandbox}
+							<div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
+								<p class="text-sm text-amber-700">
+									<iconify-icon icon="mdi:test-tube" width="14" height="14" class="inline mr-1"></iconify-icon>
+									<span class="font-medium">Sandbox Mode:</span> Click the button below to simulate the payment {sandboxSimulation === 'success' ? 'approval' : 'failure'}.
+								</p>
+							</div>
+						{:else}
+							<div class="bg-[#FFF8E1] rounded-lg p-4 text-left space-y-2">
+								<div class="flex items-start gap-3">
+									<div class="w-6 h-6 rounded-full bg-[#FFCB05] flex items-center justify-center flex-shrink-0 mt-0.5">
+										<span class="text-[#004F71] text-xs font-bold">1</span>
+									</div>
+									<p class="text-sm text-gray-700">Check your <strong>MTN MoMo app</strong> for a payment notification</p>
+								</div>
+								<div class="flex items-start gap-3">
+									<div class="w-6 h-6 rounded-full bg-[#FFCB05] flex items-center justify-center flex-shrink-0 mt-0.5">
+										<span class="text-[#004F71] text-xs font-bold">2</span>
+									</div>
+									<p class="text-sm text-gray-700">Or wait for a <strong>USSD popup</strong> on your phone</p>
+								</div>
+								<div class="flex items-start gap-3">
+									<div class="w-6 h-6 rounded-full bg-[#FFCB05] flex items-center justify-center flex-shrink-0 mt-0.5">
+										<span class="text-[#004F71] text-xs font-bold">3</span>
+									</div>
+									<p class="text-sm text-gray-700">Enter your <strong>MoMo PIN</strong> to approve the payment</p>
+								</div>
+							</div>
+						{/if}
+					</div>
+
+					<!-- Buttons -->
+					<div class="space-y-3">
+						<button
+							type="button"
+							onclick={verifyMomoPayment}
+							disabled={verifyingMomoPayment}
+							class="w-full py-3 px-4 rounded-full bg-[#004F71] text-[#FFCB05] font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+						>
+							{#if verifyingMomoPayment}
+								<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
+								Verifying...
+							{:else}
+								<iconify-icon icon="mdi:check-circle" width="20" height="20"></iconify-icon>
+								{isMomoSandbox ? 'Verify Payment' : 'I Have Approved'}
+							{/if}
+						</button>
+						
+						<button
+							type="button"
+							onclick={closeMomoModal}
+							class="w-full py-3 px-4 rounded-full border border-gray-200 font-medium hover:bg-gray-50 transition-colors text-text-muted"
+						>
+							Cancel Payment
+						</button>
+					</div>
+
+					<!-- Help text -->
+					{#if !isMomoSandbox}
+						<p class="text-xs text-text-muted mt-4">
+							Didn't receive a prompt? Make sure your phone is on and has network coverage.
+						</p>
+					{/if}
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}

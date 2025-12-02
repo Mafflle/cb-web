@@ -4,3 +4,8 @@ export const supportedCountries: any = {
 	'+233': { name: 'Ghana', code: '+233', placeholder: '20 123 4567', maxlength: 10 },
 	'+228': { name: 'Togo', code: '+228', placeholder: '90 12 34 56', maxlength: 8 }
 };
+
+export const paymentMethods = {
+	PAYSTACK: 'paystack',
+	MOMO: 'momo'
+};
