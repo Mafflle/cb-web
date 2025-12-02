@@ -10,6 +10,8 @@
 	import appSettings from '$lib/stores/appSettings.svelte';
 	import network from '$lib/stores/network.svelte';
 	import OfflinePage from '$lib/components/OfflinePage.svelte';
+	import DesktopBlocker from '$lib/components/DesktopBlocker.svelte';
+	import NavigationLoader from '$lib/components/NavigationLoader.svelte';
 
 	let { data, children } = $props()
   	let { session, supabase } = $derived(data)	
@@ -38,13 +40,12 @@
 
 <Toaster richColors position="bottom-right" />
 
-{#if !network.online}
-	<OfflinePage />
-{:else if (!appSettings.loaded)}
-	<div class="flex h-screen items-center justify-center">
-		<iconify-icon icon="eos-icons:loading" class=" text-primary" width="32" height="32"
-		></iconify-icon>
-	</div>
-{:else}
-	{@render children()}
-{/if}
+<DesktopBlocker>
+	{#if !network.online}
+		<OfflinePage />
+	{:else if !appSettings.loaded}
+		<NavigationLoader />
+	{:else}
+		{@render children()}
+	{/if}
+</DesktopBlocker>
