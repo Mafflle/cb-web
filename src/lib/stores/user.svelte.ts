@@ -22,7 +22,6 @@ const createStore = () => {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        // No preferences exist yet, create them
         const { data: newData, error: insertError } = await supabase
           .from('user_preferences')
           .insert({ user_id: userId })
@@ -63,14 +62,11 @@ const createStore = () => {
     
     let newFavorites: string[];
     if (isCurrentlyFavorite) {
-      // Remove from favorites
       newFavorites = currentFavorites.filter(id => id !== restaurantId);
     } else {
-      // Add to favorites
       newFavorites = [...currentFavorites, restaurantId];
     }
 
-    // Optimistic update
     userPreferences = { ...userPreferences, favorite_restaurants: newFavorites };
 
     const { error } = await supabaseClient
@@ -79,7 +75,6 @@ const createStore = () => {
       .eq('user_id', currentUser.id);
 
     if (error) {
-      // Rollback on error
       userPreferences = { ...userPreferences, favorite_restaurants: currentFavorites };
       throw error;
     }
