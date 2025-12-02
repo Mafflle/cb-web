@@ -351,6 +351,14 @@
 						</li>
 					</ul>
 				</div>
+
+				<p class="text-text-muted text-center text-xs">
+					By placing this order, you agree to our
+					<a href="/legal/terms-of-service" class="text-primary underline">Terms of Service</a>,
+					<a href="/legal/refund-policy" class="text-primary underline">Refund Policy</a>, and
+					<a href="/legal/delivery-policy" class="text-primary underline">Delivery Policy</a>.
+				</p>
+
 				<button
 					class="btn w-full rounded-full"
 					onclick={async (event) => {

@@ -427,6 +427,13 @@
 						<span class="font-semibold">Payment Status: {order.payment_status}</span>
 					</div>
 				{/if}
+
+				<!-- Refund Policy Notice -->
+				<p class="text-text-muted text-center text-xs mt-4">
+					Need help with your order? Check our
+					<a href="/legal/refund-policy" class="text-primary underline">Refund Policy</a>
+					for information on refunds and cancellations.
+				</p>
 			</div>
 		</div>
 	{/if}
