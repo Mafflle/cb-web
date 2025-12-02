@@ -244,6 +244,23 @@
 
 			<Separator py="8px" />
 
+			<a href="/favorites" class="flex items-center justify-between py-[8px] group">
+				<div class="flex items-center gap-[12px]">
+					<div class="h-[40px] w-[40px] rounded-full bg-[#f2f2f2] flex items-center justify-center">
+						<iconify-icon icon="mdi:heart-outline" width="20" height="20"></iconify-icon>
+					</div>
+					<span class="font-semibold">My Favorites</span>
+				</div>
+				<iconify-icon
+					icon="mdi:chevron-right"
+					width="24"
+					height="24"
+					class="text-text-muted group-hover:text-primary transition-colors"
+				></iconify-icon>
+			</a>
+
+			<Separator py="8px" />
+
 			<a href="/carts" class="flex items-center justify-between py-[8px] group">
 				<div class="flex items-center gap-[12px]">
 					<div class="h-[40px] w-[40px] rounded-full bg-[#f2f2f2] flex items-center justify-center">

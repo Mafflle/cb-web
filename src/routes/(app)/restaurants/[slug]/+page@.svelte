@@ -12,15 +12,51 @@
 		isRestaurantOpen
 	} from '$lib/utils/helpers';
 	import { slide } from 'svelte/transition';
-	import Separator from '../../../../lib/components/Separator.svelte';
-	import Navbar from '../../../../lib/components/Navbar.svelte';
-	import Footer from '../../../../lib/components/Footer.svelte';
+	import Separator from '$lib/components/Separator.svelte';
+	import Navbar from '$lib/components/Navbar.svelte';
+	import Footer from '$lib/components/Footer.svelte';
+	import userStore from '$lib/stores/user.svelte';
+	import auth from '$lib/stores/auth.svelte';
+	import { goto } from '$app/navigation';
+	import { showToast } from '../../../../lib/utils/toaster.svelte';
 
 	let { data }: PageProps = $props();
 
 	let { restaurant, items, featuredItems } = $derived(data);
 	let cart = $derived<Cart | null>(cartStore.carts[restaurant?.id as string] ?? null);
 	let cartItems = $derived(cart ? cart.items : []);
+
+	let isTogglingFavorite = $state(false);
+	let isFavorited = $derived(restaurant ? userStore.isFavorite(restaurant.id) : false);
+
+	async function handleFavoriteClick() {
+		if (!restaurant) return;
+
+		// Check if user is logged in
+		if (!auth.currentUser) {
+			goto('/auth/login?redirectTo=' + encodeURIComponent(window.location.pathname));
+			return;
+		}
+
+		if (isTogglingFavorite) return;
+
+		isTogglingFavorite = true;
+		try {
+			const isNowFavorite = await userStore.toggleFavorite(restaurant.id);
+			showToast({
+				type: 'success',
+				message: isNowFavorite ? 'Added to favorites' : 'Removed from favorites'
+			});
+		} catch (error) {
+			console.error('Failed to toggle favorite:', error);
+			showToast({
+				type: 'error',
+				message: 'Failed to update favorites'
+			});
+		} finally {
+			isTogglingFavorite = false;
+		}
+	}
 
 	onMount(async () => {
 		if (!cartStore.loaded) {
@@ -60,31 +96,38 @@
 						<img src="/icons/caret-left.svg" alt="Go back" height="20" width="20" />
 					</a>
 					<button
-						class="btn bg-surface-transparent rounded-full p-[10px] text-white hover:bg-black/90"
-						aria-label="Add to Favorites"
+						onclick={handleFavoriteClick}
+						disabled={isTogglingFavorite}
+						class="btn bg-surface-transparent rounded-full p-[10px] text-white hover:bg-black/90 disabled:opacity-50"
+						aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
 					>
-						<svg
-							width="20"
-							height="20"
-							viewBox="0 0 20 21"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<g clip-path="url(#clip0_176_268)">
-								<path
-									d="M10 18C10 18 1.875 13.625 1.875 8.46875C1.875 7.34987 2.31947 6.27681 3.11064 5.48564C3.90181 4.69447 4.97487 4.25 6.09375 4.25C7.85859 4.25 9.37031 5.21172 10 6.75C10.6297 5.21172 12.1414 4.25 13.9062 4.25C15.0251 4.25 16.0982 4.69447 16.8894 5.48564C17.6805 6.27681 18.125 7.34987 18.125 8.46875C18.125 13.625 10 18 10 18Z"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								/>
-							</g>
-							<defs>
-								<clipPath id="clip0_176_268">
-									<rect width="20" height="20" fill="white" transform="translate(0 0.5)" />
-								</clipPath>
-							</defs>
-						</svg>
+						{#if isTogglingFavorite}
+							<iconify-icon icon="svg-spinners:ring-resize" class="text-[20px]"></iconify-icon>
+						{:else}
+							<svg
+								width="20"
+								height="20"
+								viewBox="0 0 20 21"
+								fill={isFavorited ? 'currentColor' : 'none'}
+								xmlns="http://www.w3.org/2000/svg"
+								class={isFavorited ? 'text-red-500' : 'text-white'}
+							>
+								<g clip-path="url(#clip0_176_268)">
+									<path
+										d="M10 18C10 18 1.875 13.625 1.875 8.46875C1.875 7.34987 2.31947 6.27681 3.11064 5.48564C3.90181 4.69447 4.97487 4.25 6.09375 4.25C7.85859 4.25 9.37031 5.21172 10 6.75C10.6297 5.21172 12.1414 4.25 13.9062 4.25C15.0251 4.25 16.0982 4.69447 16.8894 5.48564C17.6805 6.27681 18.125 7.34987 18.125 8.46875C18.125 13.625 10 18 10 18Z"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</g>
+								<defs>
+									<clipPath id="clip0_176_268">
+										<rect width="20" height="20" fill="white" transform="translate(0 0.5)" />
+									</clipPath>
+								</defs>
+							</svg>
+						{/if}
 					</button>
 				</div>
 	
