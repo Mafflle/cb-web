@@ -93,7 +93,7 @@
 										await update();
 									} else if (result.type === 'failure') {
 										showToast({
-											message: result.data?.error || 'Failed to update name',
+											message: (result.data?.error as string) || 'Failed to update name',
 											type: 'error'
 										});
 									}
@@ -110,10 +110,15 @@
 							/>
 							<button
 								type="submit"
-								class="btn btn-primary rounded-full px-[16px] py-[8px] text-sm"
+								class="btn btn-primary rounded-full px-[16px] py-[8px] text-sm flex items-center gap-2"
 								disabled={savingName}
 							>
-								{savingName ? 'Saving...' : 'Save'}
+								{#if savingName}
+									<iconify-icon icon="eos-icons:loading" width="16" height="16"></iconify-icon>
+									Saving...
+								{:else}
+									Save
+								{/if}
 							</button>
 							<button
 								type="button"
@@ -163,7 +168,7 @@
 										await update();
 									} else if (result.type === 'failure') {
 										showToast({
-											message: result.data?.error || 'Failed to update email',
+											message: (result.data?.error as string) || 'Failed to update email',
 											type: 'error'
 										});
 									}
@@ -180,10 +185,15 @@
 							/>
 							<button
 								type="submit"
-								class="btn btn-primary rounded-full px-[16px] py-[8px] text-sm"
+								class="btn btn-primary rounded-full px-[16px] py-[8px] text-sm flex items-center gap-2"
 								disabled={savingEmail}
 							>
-								{savingEmail ? 'Saving...' : 'Save'}
+								{#if savingEmail}
+									<iconify-icon icon="eos-icons:loading" width="16" height="16"></iconify-icon>
+									Saving...
+								{:else}
+									Save
+								{/if}
 							</button>
 							<button
 								type="button"

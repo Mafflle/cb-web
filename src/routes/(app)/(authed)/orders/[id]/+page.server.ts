@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	try {
 		const order = await ordersRepository.getById(locals.supabase, params.id);
 
-		if (!order) {
+		if (!order || order.user_id !== locals.user?.id) {
 			throw error(404, 'Order Not Found');
 		}
 

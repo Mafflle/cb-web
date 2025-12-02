@@ -52,7 +52,7 @@
 			{#if cartItems.find((i) => i.id === item.id)}
 				<div class="bg-background flex items-center gap-3 rounded-full p-[8px]">
 					<button
-						aria-label="Remove from cart"
+						aria-label="Add to cart"
 						class="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[#efefef] shadow-sm"
 						onclick={() => cart.addItem(restaurant, item)}
 					>
@@ -60,7 +60,7 @@
 					</button>
 					<span class="font-medium">{cartItems.find((i) => i.id === item.id).quantity}</span>
 					<button
-						aria-label="Add to cart"
+						aria-label="Remove from cart"
 						class="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[#efefef] shadow-sm"
 						onclick={() => cart.removeItem(restaurant.id, item.id)}
 					>
