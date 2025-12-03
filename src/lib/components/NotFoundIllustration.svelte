@@ -5,7 +5,6 @@
 	viewBox="0 0 500 500"
 	version="1.1"
 	xmlns:xlink="http://www.w3.org/1999/xlink"
-	xmlns:svgjs="http://svgjs.com/svgjs"
 	><style>
 		svg#freepik_stories-oops-404-error-with-a-broken-robot:not(.animated) .animable {
 			opacity: 0;

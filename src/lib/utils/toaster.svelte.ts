@@ -1,5 +1,6 @@
 import { toast } from 'svelte-sonner';
 import NotificationProp from '../components/NotificationProp.svelte';
+import type { ComponentType } from 'svelte';
 
 export const showToast = (options: {
 	message: string;
@@ -9,7 +10,8 @@ export const showToast = (options: {
 		onClick: () => void;
 	};
 }) => {
-	toast.custom(NotificationProp, {
+	// Type assertion needed for Svelte 5 compatibility with svelte-sonner
+	toast.custom(NotificationProp as unknown as ComponentType, {
 		componentProps: {
 			message: options.message,
 			type: options.type,

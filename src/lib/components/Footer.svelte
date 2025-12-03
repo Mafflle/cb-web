@@ -6,14 +6,13 @@
 		</div>
 
 		<div class="flex space-x-3">
-			<!-- TODO: Add actual social media links -->
-			<a href="#" class="social-icon" aria-label="Instagram">
+			<a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Instagram">
 				<img src="/icons/ig.svg" alt="" width="16" height="16">
 			</a>
-			<a href="#" class="social-icon" aria-label="X (formerly Twitter)">
+			<a href="https://x.com" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="X (formerly Twitter)">
 				<img src="/icons/x.svg" alt="" width="16" height="16">
 			</a>
-			<a href="#" class="social-icon" aria-label="TikTok">
+			<a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="TikTok">
 				<img src="/icons/tiktok.svg" alt="" width="16" height="16">
 			</a>
 		</div>
