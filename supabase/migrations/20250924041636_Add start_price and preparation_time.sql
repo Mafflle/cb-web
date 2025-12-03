@@ -1,0 +1,3 @@
+ALTER TABLE restaurant
+ADD COLUMN start_price NUMERIC NOT NULL,
+ADD COLUMN preparation_time INTERVAL NOT NULL;

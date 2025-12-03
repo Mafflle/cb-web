@@ -1,56 +1,86 @@
-import supabase from '../supabase';
+import { invalidate } from "$app/navigation";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import userStore from "./user.svelte";
 
 const createStore = () => {
-	let currentUser = $state<any>(null);
 	let loaded = $state(false);
 	let loadLocked = $state(false);
+	let supabase = $state<SupabaseClient | null>(null);
+	let session = $state<Session | null>(null);
+	let authStateSubscription: any = null; 
+	const currentUser = $derived.by(() => session?.user ?? null);
 
-	const getOtp = async (phone: string) => {
-		return await supabase.auth.signInWithOtp({
-			phone: phone,
-			options: {
-				channel: 'whatsapp'
-			}
-		});
-	};
-
-	const login = async (otp: string, phone: string) => {
-		const { data, error } = await supabase.auth.verifyOtp({
-			phone: phone,
-			token: otp,
-			type: 'sms'
-		});
-
-		if (error) {
-			return {
-				error: error.message
-			};
-		}
-
-		currentUser = data.user;
-	};
 
 	const logout = async () => {
-		await supabase.auth.signOut();
-		currentUser = null;
-	};
+		if (supabase && session) {
+			await supabase.auth.signOut();
+			session = null;
+		}
+	}
 
-	const load = async () => {
+	const load = async (supabaseClient: any, initialSession?: Session | null) => {
 		if (loadLocked) return;
 		loadLocked = true;
 
-		const { data, error } = await supabase.auth.getSession();
+		supabase = supabaseClient;
+		if (supabase) {
+			if (initialSession !== undefined && initialSession !== null) {
+				session = initialSession;
+			} else{
+				const { data } = await supabase.auth.getSession();
+				session = data.session;
+			}
 
-		if (!error) {
-			currentUser = data.session?.user || null;
+			await userStore.load(currentUser, supabase);
 
-			await supabase.auth.onAuthStateChange(async (event, session) => {
-				currentUser = session?.user || null;
+			if (authStateSubscription) {
+				authStateSubscription.unsubscribe();
+			}
+	
+			const {data} = supabase.auth.onAuthStateChange(async (_event: string, _session: Session | null) => {
+				if (_session?.expires_at !== session?.expires_at) {
+					await invalidate('supabase:auth');
+				}
 			});
+			authStateSubscription = data.subscription;
 		}
+
+		
 
 		loaded = true;
 		loadLocked = false;
+	};
+
+	const refresh = async () => {
+		if (supabase) {
+			const { data } = await supabase.auth.getSession();
+			session = data.session;
+			await userStore.load(currentUser, supabase!);
+		}
+
+	};
+
+	const cleanup = () => {
+		if (authStateSubscription) {
+			authStateSubscription.unsubscribe();
+			authStateSubscription = null;
+		}
+	}
+
+	const waitForAuth = async (timeout: number) => {
+		if (!loaded) {
+			const start = Date.now();
+			while (!loaded) {
+				if (Date.now() - start > timeout) {
+					return false;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+
+			return true;
+		} 
+
+		return true;
 	};
 
 	return {
@@ -60,13 +90,17 @@ const createStore = () => {
 		get loaded() {
 			return loaded;
 		},
-		getOtp,
-		login,
+		get supabase() {
+			return supabase;
+		},
 		load,
-		logout
+		refresh,
+		logout,
+		cleanup,
+		waitForAuth
 	};
 };
 
-const store = createStore();
+const auth = createStore();
 
-export default store;
+export default auth;

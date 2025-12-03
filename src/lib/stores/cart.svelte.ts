@@ -1,8 +1,17 @@
 import { browser } from '$app/environment';
-import restaurant from '$lib/stores/restaurant.svelte';
+import type { Tables } from '../types/database.types';
+import type { Restaurant } from '../types/restaurants.types';
+import { isRestaurantOpen } from '../utils/helpers';
+import { showToast } from '../utils/toaster.svelte';
+
+export type Cart = {
+		restaurantDetails: Tables<'restaurant'> | null,
+		items: (Tables<'items'> & { quantity: number })[],
+		total: number
+	}
 
 const createStore = () => {
-	let carts = $state<any>({});
+	let carts = $state<{[restaurantId: string]: Cart}>({});
 	let loaded = $state(false);
 	let loadLocked = $state(false);
 	const keys = $derived.by(() => Object.keys(carts));
@@ -35,16 +44,26 @@ const createStore = () => {
 		loadLocked = false;
 	};
 
-	const addItem = async (restaurantId: string, item: any, quantity: number = 1) => {
-		if (!carts[restaurantId]) {
-			carts[restaurantId] = {
-				restaurantDetails: await restaurant.getById(restaurantId),
+	const addItem = async (restaurant: Restaurant, item: any, quantity: number = 1) => {
+		const isOpen = isRestaurantOpen(restaurant.opening_hours);
+
+		if (!isOpen) {
+			showToast({
+				message: `${restaurant.name} is currently closed. You can only add items from open restaurants.`,
+				type: 'error',
+			});
+			return;
+		}
+
+		if (!carts[restaurant.id]) {
+			carts[restaurant.id] = {
+				restaurantDetails: restaurant,
 				items: [],
 				total: 0
 			};
 		}
 
-		const cart = carts[restaurantId];
+		const cart = carts[restaurant.id];
 		const existingItem = cart.items.find((i: any) => i.id === item.id);
 
 		if (existingItem) {
@@ -54,7 +73,7 @@ const createStore = () => {
 		}
 
 		cart.total += (item.discount_price || item.price) * quantity;
-		carts[restaurantId] = cart;
+		carts[restaurant.id] = cart;
 		persistCarts();
 	};
 

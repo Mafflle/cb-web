@@ -1,0 +1,27 @@
+import type { EmailOtpType } from '@supabase/supabase-js';
+import { redirect, type RequestHandler } from '@sveltejs/kit';
+
+export const GET: RequestHandler = async ({ url, locals }) => {
+	if (locals.session) {
+		throw redirect(303, '/');
+	}
+
+	const token_hash = url.searchParams.get('token_hash');
+	const type = url.searchParams.get('type') as EmailOtpType | null;
+	const next = url.searchParams.get('next') ?? '/';
+
+	const redirectTo = new URL(url);
+	redirectTo.pathname = next;
+	redirectTo.searchParams.delete('token_hash');
+	redirectTo.searchParams.delete('type');
+
+	if (token_hash && type) {
+		const { error } = await locals.supabase.auth.verifyOtp({ type, token_hash });
+    if (!error) {
+      redirectTo.searchParams.delete('next');
+      throw redirect(303, redirectTo);
+    }
+	}
+
+	throw redirect(303, '/auth/error');
+};

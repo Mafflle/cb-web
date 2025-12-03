@@ -1,0 +1,3 @@
+ALTER TABLE restaurant
+ALTER COLUMN slug DROP DEFAULT,
+ADD CONSTRAINT unique_slug UNIQUE (slug);

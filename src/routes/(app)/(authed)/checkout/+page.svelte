@@ -1,30 +1,34 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import cart from '$lib/stores/cart.svelte';
 	import { onMount } from 'svelte';
-	import Seo from '$lib/components/Seo.svelte';
-	import { toast } from 'svelte-sonner';
-	import PhoneInput from '$lib/components/forms/PhoneInput.svelte';
 	import { z } from 'zod';
 	import { supportedCountries } from '$lib/utils/constants';
-	import orders from '$lib/stores/orders.svelte';
 	import { goto } from '$app/navigation';
+	import { showToast } from '$lib/utils/toaster.svelte';
 
-	const orderChargeDetails = $state({
-		deliveryFee: 700,
-		serviceCharge: 100
-	});
+	import Seo from '$lib/components/Seo.svelte';
+	import PhoneInput from '$lib/components/forms/PhoneInput.svelte';
+
+	import cart from '$lib/stores/cart.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
+	import ordersRepository from '$lib/repositories/orders.repository';
+	import restaurantRepository from '$lib/repositories/restaurant.repository';
+	import type { PageProps } from './$types';
+	import Separator from '$lib/components/Separator.svelte';
+
+	const { data }: PageProps = $props();
+
+	let { supabase, session } = $derived(data);
 
 	let restaurantId = page.url.searchParams.get('restaurant');
 	let cartDetails: any = $state(null);
 	let loading = $state(true);
+	let pricesChanged = $state(false);
 	let errors = $state<any>({
 		name: null,
 		address: null,
 		phoneCode: null,
 		phone: null,
-		whatsappCode: null,
-		whatsapp: null,
 		specialInstructions: null
 	});
 
@@ -63,23 +67,6 @@
 					return z.NEVER;
 				}
 			}),
-		whatsappCode: z.enum(Object.keys(supportedCountries) as [string, ...string[]], {
-			errorMap: () => ({ message: 'Invalid country code' })
-		}),
-		whatsapp: z.string().superRefine((val, ctx) => {
-			if (
-				val.trim().length < supportedCountries[deliveryDetails.whatsappCode].maxlength ||
-				val.trim().length > supportedCountries[deliveryDetails.whatsappCode].maxlength
-			) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: `Phone number must be ${supportedCountries[deliveryDetails.whatsappCode].maxlength} digits.`,
-					fatal: true
-				});
-
-				return z.NEVER;
-			}
-		}),
 		specialInstructions: z.string().optional()
 	});
 
@@ -91,18 +78,83 @@
 		}
 
 		if (!restaurantId) {
-			toast.error('No restaurant ID provided');
+			showToast({ message: 'No restaurant ID provided', type: 'error' });
 			goto('/');
 			return;
 		}
 		cartDetails = cart.getCart(restaurantId);
 
 		if (!cartDetails) {
-			toast.error('There is no cart for this restaurant');
+			showToast({ message: 'There is no cart for this restaurant', type: 'error' });
 			goto('/');
+			return;
 		}
+
+		// Validate prices haven't changed since items were added to cart
+		await validateCartPrices();
+
 		loading = false;
 	});
+
+	// Check if item prices have changed and update cart if needed
+	const validateCartPrices = async () => {
+		if (!cartDetails || !restaurantId) return;
+
+		try {
+			const currentItems = await restaurantRepository.getItemsByRestaurantId(
+				supabase,
+				restaurantId
+			);
+
+			let hasChanges = false;
+			let newTotal = 0;
+
+			const updatedItems = cartDetails.items.map((cartItem: any) => {
+				const currentItem = currentItems.find((item) => item.id === cartItem.id);
+
+				if (!currentItem) {
+					// Item no longer exists
+					hasChanges = true;
+					return null;
+				}
+
+				const currentPrice = currentItem.discount_price || currentItem.price;
+				const cartPrice = cartItem.discount_price || cartItem.price;
+
+				if (currentPrice !== cartPrice) {
+					hasChanges = true;
+					// Update cart item with new price
+					const updatedItem = {
+						...cartItem,
+						price: currentItem.price,
+						discount_price: currentItem.discount_price
+					};
+					newTotal += currentPrice * cartItem.quantity;
+					return updatedItem;
+				}
+
+				newTotal += cartPrice * cartItem.quantity;
+				return cartItem;
+			}).filter(Boolean);
+
+			if (hasChanges) {
+				pricesChanged = true;
+				// Update cartDetails with new prices
+				cartDetails = {
+					...cartDetails,
+					items: updatedItems,
+					total: newTotal
+				};
+
+				showToast({
+					message: 'Some item prices have changed. Please review your cart.',
+					type: 'info'
+				});
+			}
+		} catch (error) {
+			console.error('Error validating cart prices:', error);
+		}
+	};
 
 	const handleCheckout = async () => {
 		ordering = true;
@@ -111,17 +163,14 @@
 			address: null,
 			phoneCode: null,
 			phone: null,
-			whatsappCode: null,
-			whatsapp: null,
 			specialInstructions: null
 		};
 
 		try {
-			const { phoneCode, whatsappCode, ...parsedData } = schema.parse(deliveryDetails);
+			const { phoneCode, ...parsedData } = schema.parse(deliveryDetails);
 			const dataToSend = {
 				...parsedData,
 				phone: `${phoneCode}${parsedData.phone.replace(/\D/g, '')}`,
-				whatsapp: `${whatsappCode}${parsedData.whatsapp.replace(/\D/g, '')}`,
 				restaurantId: restaurantId as string,
 				items: cartDetails.items.map((item: any) => ({
 					id: item.id,
@@ -129,15 +178,26 @@
 					price: item.discount_price || item.price
 				}))
 			};
-			let order = await orders.placeOrder(dataToSend);
-			toast.success('Order placed successfully');
-			goto(`/orders/${order.id}`);
+			let order = await ordersRepository.placeOrder(
+				supabase,
+				dataToSend,
+				session?.user.id as string
+			);
+			cart.deleteCart(restaurantId as string);
+			showToast({ message: 'Order placed successfully', type: 'success' });
+			if (order?.payment_status === 'pending') {
+				showToast({
+					message: 'Please complete your payment to confirm your order',
+					type: 'info'
+				});
+				goto(`/orders/${order.id}`);
+			}
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				errors = error.flatten().fieldErrors;
 			} else {
 				console.error('Unexpected error:', error);
-				toast.error('Checkout failed. Please try again.');
+				showToast({ message: 'An unexpected error occurred', type: 'error' });
 			}
 		} finally {
 			ordering = false;
@@ -152,18 +212,34 @@
 
 <div class="flex h-full w-full flex-col items-center justify-center">
 	{#if loading}
-		<p>Loading...</p>
+		<div class="flex flex-col items-center justify-center gap-2 py-10">
+			<iconify-icon icon="eos-icons:loading" width="32" height="32" class="text-primary"
+			></iconify-icon>
+			<p class="text-text-muted">Loading checkout...</p>
+		</div>
 	{:else if cartDetails}
 		<div class="bg-background flex w-full max-w-2xl flex-col justify-center p-4">
-			<!-- <Breadcrumb
-				text={`Back to ${cartDetails.restaurantDetails.name}`}
-				href={`/restaurants/${cartDetails.restaurantDetails.slug}`}
-			/> -->
 			<h2 class="text-2xl font-bold">Checkout for {cartDetails.restaurantDetails.name}</h2>
 
-			<form>
-				<div class="mt-4">
-					<label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+			{#if pricesChanged}
+				<div
+					class="mt-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
+				>
+					<iconify-icon icon="mdi:alert-circle" width="24" height="24" class="text-amber-600"
+					></iconify-icon>
+					<div>
+						<p class="font-semibold text-amber-800">Prices Updated</p>
+						<p class="text-sm text-amber-700">
+							Some item prices have changed since you added them to your cart. The updated prices
+							are shown below.
+						</p>
+					</div>
+				</div>
+			{/if}
+
+			<form class="mt-[32px] space-y-[24px]">
+				<div>
+					<label for="name" class="form-label">Name</label>
 					<input
 						type="text"
 						id="name"
@@ -173,13 +249,13 @@
 						placeholder="John Doe"
 					/>
 					{#if errors.name}
-						{#each errors.name as error}
+						{#each errors.name as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
 				</div>
-				<div class="mt-4">
-					<label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+				<div>
+					<label for="address" class="form-label">Address</label>
 					<input
 						type="text"
 						id="address"
@@ -189,20 +265,20 @@
 						placeholder="123 Main St, Cotonou"
 					/>
 					{#if errors.address}
-						{#each errors.address as error}
+						{#each errors.address as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
 				</div>
-				<div class="mt-4">
-					<label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+				<div>
+					<label for="phone" class="form-label">Phone</label>
 					<PhoneInput
 						bind:countryCode={deliveryDetails.phoneCode}
 						bind:phoneNumber={deliveryDetails.phone}
 						error={errors.phone}
 					/>
 					{#if errors.phone}
-						{#each errors.phone as error}
+						{#each errors.phone as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
@@ -210,33 +286,16 @@
 						The delivery person will contact you on this number.
 					</p>
 				</div>
-				<div class="mt-4">
-					<label for="whatsapp" class="block text-sm font-medium text-gray-700">WhatsApp</label>
-					<PhoneInput
-						bind:countryCode={deliveryDetails.whatsappCode}
-						bind:phoneNumber={deliveryDetails.whatsapp}
-						error={errors.whatsapp}
-					/>
-					{#if errors.whatsapp}
-						{#each errors.whatsapp as error}
-							<p class="mt-2 text-sm text-red-600">{error}</p>
-						{/each}
-					{/if}
-					<p class="mt-2 text-sm text-gray-500">
-						We will send you updates about your order on WhatsApp.
-					</p>
-				</div>
 
 				<div
-					class="mt-4"
 					aria-live="polite"
 					aria-atomic="true"
 					role="alert"
 					aria-relevant="all"
 					aria-label="Special Instructions"
 				>
-					<label for="specialInstructions" class="block text-sm font-medium text-gray-700">
-						Special Instructions
+					<label for="specialInstructions" class="form-label">
+						Special Instructions (Optional)
 					</label>
 
 					<textarea
@@ -249,46 +308,59 @@
 					></textarea>
 
 					{#if errors.specialInstructions}
-						{#each errors.specialInstructions as error}
+						{#each errors.specialInstructions as error, index (index)}
 							<p class="mt-2 text-sm text-red-600">{error}</p>
 						{/each}
 					{/if}
 				</div>
 
-				<div class="bg-surface mt-4 p-4 text-sm">
+				<div
+					class="mt-[60px] rounded-[12px] border border-[#f1f1f1] bg-white px-[20px] py-[24px] text-sm"
+				>
 					<ul class="w-full">
-						{#each cartDetails.items as item}
-							<li class="flex justify-between border-b p-2">
-								<span>{item.name}</span>
-								<span>{item.quantity} x {item.discount_price || item.price} XOF</span>
+						{#each cartDetails.items as item, index (index)}
+							<li class="flex justify-between p-2">
+								<span class="text-text-muted uppercase">{item.name}</span>
+								<span>
+									{item.quantity} x {appSettings.formatPrice(item.discount_price || item.price)}
+								</span>
 							</li>
 						{/each}
 					</ul>
-					<ul class="mt-4 w-full space-y-2 px-2">
+					<Separator py="32px" variant="dashed" color="#DADADA" />
+					<ul class="w-full space-y-2 px-2">
 						<li class="flex justify-between">
-							<span>Sub-Total:</span>
-							<span>{cartDetails.total} XOF</span>
+							<span class="text-text-muted uppercase">Sub-Total:</span>
+							<span>{appSettings.formatPrice(cartDetails.total)}</span>
 						</li>
 						<li class="flex justify-between">
-							<span>Delivery Fee:</span>
-							<span> {orderChargeDetails.deliveryFee} XOF</span>
+							<span class="text-text-muted uppercase">Delivery Fee:</span>
+							<span>{appSettings.formatPrice(appSettings.deliveryFee)}</span>
 						</li>
 						<li class="flex justify-between">
-							<span>Service Fee:</span>
-							<span> {orderChargeDetails.serviceCharge} XOF</span>
+							<span class="text-text-muted uppercase">Service Fee:</span>
+							<span>{appSettings.formatPrice(appSettings.serviceCharge)}</span>
 						</li>
 						<li class="flex justify-between">
-							<span>Total:</span>
-							<span
-								>{cartDetails.total +
-									orderChargeDetails.deliveryFee +
-									orderChargeDetails.serviceCharge} XOF</span
-							>
+							<span class="text-text-muted uppercase">Total:</span>
+							<span>
+								{appSettings.formatPrice(
+									cartDetails.total + appSettings.deliveryFee + appSettings.serviceCharge
+								)}
+							</span>
 						</li>
 					</ul>
 				</div>
+
+				<p class="text-text-muted text-center text-xs">
+					By placing this order, you agree to our
+					<a href="/legal/terms-of-service" class="text-primary underline">Terms of Service</a>,
+					<a href="/legal/refund-policy" class="text-primary underline">Refund Policy</a>, and
+					<a href="/legal/delivery-policy" class="text-primary underline">Delivery Policy</a>.
+				</p>
+
 				<button
-					class="btn mt-4 w-full"
+					class="btn w-full rounded-full"
 					onclick={async (event) => {
 						event.preventDefault();
 						// Handle checkout logic here

@@ -1,38 +1,61 @@
-# sv
+# Development 
+After cloning the repository, follow these steps to set up your local development environment and run the application.
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## Prerequisites
+- Node.js (v18 or later)
+- Docker (For Local Supabase)
 
-## Creating a project
+## Setup
+1. Clone the repository
+    ```bash
+    git clone git@github.com:Mafflle/cb-web.git
+    ```
 
-If you're seeing this, you've probably already done this step. Congrats!
+2. Navigate to the project directory
+    ```bash
+    cd cb-web
+    ```
 
-```bash
-# create a new project in the current directory
-npx sv create
+3. Install dependencies
+    ```bash
+    pnpm install
+    ```
 
-# create a new project in my-app
-npx sv create my-app
-```
+4. Create a `.env` file in the root directory and copy the contents from `.env.example`:
+    ```bash
+    cp .env.example .env
+    ```
 
-## Developing
+5. Set the necessary environment variables in the `.env` file:
+    ```bash
+    VITE_SUPABASE_URL=<your_supabase_url>
+    VITE_SUPABASE_ANON_KEY=<your_supabase_anon_key>
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+    # For payment processing (if applicable)
+    VITE_MONNIFY_API_KEY=<your_monnify_api_key>
+    VITE_MONNIFY_CONTRACT_CODE=<your_monnify_contract_code>
+    ```
 
-```bash
-npm run dev
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+# Setup Local Supabase
+1. Login to Supabase CLI
+    ```bash
+    pnpx supabase login
+    ```
 
-## Building
+2. Set necessary environment variables for sms auth in the `.env` file:
+    ```bash
+    SUPABASE_AUTH_SMS_TWILIO_VERIFY_ACCOUNT_SID=<your_twillio_account_sid>
+    SUPABASE_AUTH_SMS_TWILIO_VERIFY_SERVICE_SID=<your_twillio_service_sid>
+    SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=<your_twillio_auth_token>
+    ```
 
-To create a production version of your app:
+3. Start Supabase
+    ```bash
+    pnpx supabase start
+    ```
 
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+4. Run migrations
+    ```bash
+    pnpx supabase db push --local
+    ```
