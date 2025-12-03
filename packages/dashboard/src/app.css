@@ -49,27 +49,26 @@
 }
 
 @theme {
-
 	/* Primary colors */
 	--color-primary: #df6e1d;
-	--color-secondary: #1c9937; 
+	--color-secondary: #1c9937;
 	--color-tertiary: #f2cf08;
 	--color-disabled: #d1d1d1;
 	--color-error: #ff6347;
 	--color-success: var(--color-secondary);
 	--color-warning: var(--color-tertiary);
 	--color-info: #3b82f6;
-	--color-primary-dark: #e06b00; 
+	--color-primary-dark: #e06b00;
 	--color-accent-green: var(--color-secondary);
 	--color-accent-red: var(--color-error);
 
 	/* Background colors */
-	--color-background: #ffffff; 
+	--color-background: #ffffff;
 	--color-surface: #f1f1f1;
-	--color-surface-transparent: rgba(0, 0, 0, 0.6); 
+	--color-surface-transparent: rgba(0, 0, 0, 0.6);
 
 	/* Text colors */
-	--color-text-heading: #1e1e1e; 
+	--color-text-heading: #1e1e1e;
 	--color-text-body: #1e1e1e;
 	--color-text-muted: #949494;
 	--color-border: #eaeaea;
@@ -79,17 +78,17 @@
 
 	/* Text sizes */
 	--text-h1: 3.75rem; /* 60px */
-	--text-h2: 3rem;    /* 48px */
-	--text-h3: 2rem;    /* 32px */
-	--text-h4: 1.75rem;  /* 28px */
-	--text-h5: 1.5rem;  /* 24px */
+	--text-h2: 3rem; /* 48px */
+	--text-h3: 2rem; /* 32px */
+	--text-h4: 1.75rem; /* 28px */
+	--text-h5: 1.5rem; /* 24px */
 	--text-h6: 1.25rem; /* 20px */
-	--text-base: 1rem;  /* 16px */
+	--text-base: 1rem; /* 16px */
 }
 
 @layer base {
 	body {
-		@apply bg-background text-text-body flex min-h-screen flex-col justify-between text-base;
+		@apply flex min-h-screen flex-col justify-between bg-background text-base text-text-body;
 		font-family: Athletics, sans-serif;
 	}
 
@@ -99,7 +98,7 @@
 	h4,
 	h5,
 	h6 {
-		@apply text-text-heading font-bold;
+		@apply font-bold text-text-heading;
 		font-family: 'Athletics', sans-serif;
 	}
 }

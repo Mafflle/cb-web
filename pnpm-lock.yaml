@@ -13,6 +13,22 @@ importers:
         version: 5.8.3
 
   packages/dashboard:
+    dependencies:
+      '@chowbenin/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@supabase/ssr':
+        specifier: ^0.7.0
+        version: 0.7.0(@supabase/supabase-js@2.81.1)
+      '@supabase/supabase-js':
+        specifier: ^2.81.1
+        version: 2.81.1
+      iconify-icon:
+        specifier: ^2.3.0
+        version: 2.3.0
+      svelte-sonner:
+        specifier: ^0.3.28
+        version: 0.3.28(svelte@5.45.4)
     devDependencies:
       '@eslint/compat':
         specifier: ^1.4.0
@@ -7413,6 +7429,10 @@ snapshots:
   svelte-sonner@0.3.28(svelte@5.28.1):
     dependencies:
       svelte: 5.28.1
+
+  svelte-sonner@0.3.28(svelte@5.45.4):
+    dependencies:
+      svelte: 5.45.4
 
   svelte@5.28.1:
     dependencies:
