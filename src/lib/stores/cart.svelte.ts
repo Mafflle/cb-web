@@ -79,6 +79,8 @@ const createStore = () => {
 
 	const removeItem = (restaurantId: string, itemId: number, quantity: number = 1) => {
 		const cart = carts[restaurantId];
+		if (!cart) return;
+
 		const itemIndex = cart.items.findIndex((i: any) => i.id === itemId);
 
 		if (itemIndex !== -1) {
@@ -89,7 +91,9 @@ const createStore = () => {
 				cart.items.splice(itemIndex, 1);
 			}
 
-			cart.total -= (item.discount_price || item.price) * quantity;
+			// Ensure total doesn't go negative
+			const deduction = (item.discount_price || item.price) * quantity;
+			cart.total = Math.max(0, cart.total - deduction);
 
 			if (cart.items.length === 0) {
 				delete carts[restaurantId];
@@ -108,11 +112,15 @@ const createStore = () => {
 
 	const clearCartItems = (restaurantId: string, itemId: number) => {
 		const cart = carts[restaurantId];
+		if (!cart) return;
+
 		const itemIndex = cart.items.findIndex((i: any) => i.id === itemId);
 
 		if (itemIndex !== -1) {
 			const item = cart.items[itemIndex];
 			cart.total -= (item.discount_price || item.price) * item.quantity;
+			// Ensure total doesn't go negative
+			cart.total = Math.max(0, cart.total);
 			cart.items.splice(itemIndex, 1);
 		}
 

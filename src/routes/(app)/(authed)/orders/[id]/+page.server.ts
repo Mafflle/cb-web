@@ -6,6 +6,7 @@ import { convertAmount } from '$lib/utils/helpers';
 import { paymentMethods } from '$lib/utils/constants';
 import { paystackService } from '$lib/services/paystack.service';
 import momoService from '$lib/services/momo.service';
+import { PUBLIC_MOMO_CALLBACK_URL } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	try {
@@ -88,7 +89,7 @@ export const actions: Actions = {
 					{
 						amount: order!.total,
 						currency: 'XOF',
-						callbackUrl: 'https://dev.chowbenin.com/api/momo/webhook',
+						callbackUrl: PUBLIC_MOMO_CALLBACK_URL,
 						payerPhoneNumber: momoPhoneNumber
 					}
 				);
