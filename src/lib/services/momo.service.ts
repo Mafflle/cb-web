@@ -69,10 +69,12 @@ const createService = () => {
   ) => {
     const accessToken = await getAccessToken();
 
-    const { amount, currency, callbackUrl, payerPhoneNumber } = options;
+    const { amount, callbackUrl, payerPhoneNumber } = options;
+    let currency = options.currency;
 
     const url = `${PRIVATE_MOMO_BASE_URL}/collection/v1_0/requesttopay`;
     const reference = generateReferenceId();
+    currency = PUBLIC_IS_MOMO_SANDBOX ? 'EUR' : currency;
 
     const response = await fetch(url, {
 			method: 'POST',
@@ -85,10 +87,10 @@ const createService = () => {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				amount: amount.toString(),
-				currency: PUBLIC_IS_MOMO_SANDBOX ? 'EUR' : currency,
+        amount: amount.toString(),
+				currency: currency,
 				payer: {
-					partyIdType: 'MSISDN',
+          partyIdType: 'MSISDN',
 					partyId: payerPhoneNumber
 				},
 				externalId: reference,
