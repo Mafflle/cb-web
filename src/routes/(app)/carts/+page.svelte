@@ -139,6 +139,7 @@
 			</svg>
 
 			<p class="text-text-muted mt-[8px] text-sm">No items added to cart</p>
+				<a href="/" class="btn mt-4 rounded-full">Browse Restaurants</a>
 		</div>
 	{/if}
 {:else}

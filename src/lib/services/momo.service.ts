@@ -131,10 +131,37 @@ const createService = () => {
     return data;
   }
 
+  const requestToPayDeliveryNotification = async (reference: string) => {
+    const accessToken = await getAccessToken();
+
+    const url = `${PRIVATE_MOMO_BASE_URL}/collection/v1_0/requesttopay/${reference}/deliverynotification`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'X-Target-Environment': PRIVATE_MOMO_TARGET_ENV,
+        'Ocp-Apim-Subscription-Key': PRIVATE_MOMO_PRIMARY_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Failed to send MoMo delivery notification:', await response.text());
+      throw new Error('Failed to send MoMo delivery notification');
+    }
+
+    console.log('MoMo delivery notification sent for reference:', reference);
+    console.log('Response:', response);
+
+    return true;
+  }
+
   return {
     generateReferenceId,
     requestToPay,
-    getTransactionStatus
+    getTransactionStatus,
+    requestToPayDeliveryNotification,
   };
 }
 
