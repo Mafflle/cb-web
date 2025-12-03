@@ -1,10 +1,11 @@
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { type Database } from '@chowbenin/shared/types';
 import { createServerClient } from '@supabase/ssr';
 import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
 const supabase: Handle = async ({ event, resolve }) => {
-	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+	event.locals.supabase = createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookiesToSet) => {
@@ -45,6 +46,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
 
 	const routeId = event.route.id;
 	const isAuthRoute = routeId?.startsWith('/auth');
+	const isUnauthorizedRoute = routeId === '/auth/unauthorized';
 
 	// All routes except auth routes are protected
 	if (!isAuthRoute && !event.locals.session) {
@@ -55,13 +57,26 @@ const authGuard: Handle = async ({ event, resolve }) => {
 		redirect(303, '/auth/login?redirectTo=' + encodeURIComponent(redirectTo));
 	}
 
-	// Redirect authenticated users away from auth pages
-	if (isAuthRoute && event.locals.session) {
+	if (!isAuthRoute && event.locals.session && event.locals.user) {
+		const { data: restaurantUser, error } = await event.locals.supabase
+			.from('restaurant_users')
+			.select('*, restaurant(*)')
+			.eq('user_id', event.locals.user.id)
+			.eq('is_active', true)
+			.single();
+
+		if (error || !restaurantUser) {
+			redirect(303, '/auth/unauthorized');
+		}
+
+		event.locals.restaurantUser = restaurantUser;
+		event.locals.restaurant = restaurantUser.restaurant;
+	}
+
+	if (isAuthRoute && !isUnauthorizedRoute && event.locals.session) {
 		const url = new URL(event.request.url);
 		let redirectTo = url.searchParams.get('redirectTo') || '/';
 
-		// Validate redirectTo to prevent open redirect attacks
-		// Only allow relative paths that start with /
 		if (!redirectTo.startsWith('/') || redirectTo.startsWith('//')) {
 			redirectTo = '/';
 		}

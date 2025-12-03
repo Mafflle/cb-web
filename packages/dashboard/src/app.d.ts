@@ -1,5 +1,9 @@
 import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
-import type { Database } from '@chowbenin/shared/types';
+import type { Database, Tables } from '@chowbenin/shared/types';
+
+type RestaurantUser = Tables<'restaurant_users'> & {
+	restaurant: Tables<'restaurant'> | null;
+};
 
 declare global {
 	namespace App {
@@ -9,9 +13,13 @@ declare global {
 			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>;
 			session: Session | null;
 			user: User | null;
+			restaurantUser: RestaurantUser | null;
+			restaurant: Tables<'restaurant'> | null;
 		}
 		interface PageData {
 			session: Session | null;
+			restaurantUser: RestaurantUser | null;
+			restaurant: Tables<'restaurant'> | null;
 		}
 		// interface PageState {}
 		// interface Platform {}
