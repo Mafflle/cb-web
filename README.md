@@ -244,7 +244,7 @@ ChowBenin uses Supabase as its backend. The `supabase/` folder at the root conta
 Apply all database migrations to your local Supabase:
 
 ```bash
-pnpx supabase migration up --local
+pnpx supabase migration up
 ```
 
 Or reset the database and rerun all migrations:

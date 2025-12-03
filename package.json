@@ -2,8 +2,8 @@
   "name": "chowbenin",
   "private": true,
   "scripts": {
-    "dev:web": "pnpm --filter @chowbenin/web dev",
-    "dev:dashboard": "pnpm --filter @chowbenin/dashboard dev",
+    "dev:web": "pnpm --filter @chowbenin/web dev --port 5173 --host",
+    "dev:dashboard": "pnpm --filter @chowbenin/dashboard dev --port 5174 --host",
     "build:web": "pnpm --filter @chowbenin/web build",
     "build:dashboard": "pnpm --filter @chowbenin/dashboard build",
     "check": "pnpm -r check",
