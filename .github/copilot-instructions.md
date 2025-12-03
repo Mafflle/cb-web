@@ -24,8 +24,9 @@ src/
 │   └── utils/         # Utility functions
 ├── routes/            # SvelteKit file-based routing
 │   ├── (app)/         # Main application routes
+│   │   └── (authed)/  # Routes requiring authentication
 │   ├── api/           # API endpoints
-│   └── auth/          # Authentication routes
+│   └── auth/          # Authentication flow routes (login, callback)
 └── static/            # Static assets
 supabase/
 ├── migrations/        # Database migrations
