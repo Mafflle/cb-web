@@ -131,7 +131,7 @@
 						</button>
 						{#if dropdownOpen}
 							<div
-								class=" absolute right-0 z-10 mt-2 w-48 rounded-[12px] bg-white shadow-lg focus:outline-none"
+								class=" absolute right-0 z-10 mt-2 w-48 rounded-[12px] bg-white shadow-lg focus:outline-none border border-border"
 								role="menu"
 								aria-orientation="vertical"
 								aria-labelledby="user-menu"

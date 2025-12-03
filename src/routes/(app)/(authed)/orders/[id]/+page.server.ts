@@ -84,7 +84,7 @@ export const actions: Actions = {
 				if (!momoPhoneNumber) {
 					throw error(400, 'Mobile Money phone number is required for MoMo payments');
 				}
-
+				
 				const { reference } = await momoService.requestToPay(
 					{
 						amount: order!.total,
@@ -93,7 +93,7 @@ export const actions: Actions = {
 						payerPhoneNumber: momoPhoneNumber
 					}
 				);
-
+				
 				const { error: paymentRefError } = await locals.supabase.from('payments').insert({
 					order_id: orderId,
 					amount: order!.total,
@@ -106,6 +106,12 @@ export const actions: Actions = {
 				if (paymentRefError) {
 					console.error('Error creating MoMo payment reference:', paymentRefError);
 					throw error(500, 'Failed to create MoMo payment reference');
+				}
+
+				try {
+					await momoService.requestToPayDeliveryNotification(reference);
+				} catch (err) {
+					console.error('Error sending MoMo delivery notification:', err);
 				}
 
 				return { reference, success: true };
