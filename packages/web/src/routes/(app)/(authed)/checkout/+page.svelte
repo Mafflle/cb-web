@@ -1,0 +1,382 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { z } from 'zod';
+	import { supportedCountries } from '@chowbenin/shared/constants';
+	import { goto } from '$app/navigation';
+	import { showToast } from '$lib/utils/toaster.svelte';
+
+	import Seo from '$lib/components/Seo.svelte';
+	import PhoneInput from '$lib/components/forms/PhoneInput.svelte';
+
+	import cart from '$lib/stores/cart.svelte';
+	import appSettings from '$lib/stores/appSettings.svelte';
+	import ordersRepository from '$lib/repositories/orders.repository';
+	import restaurantRepository from '$lib/repositories/restaurant.repository';
+	import type { PageProps } from './$types';
+	import Separator from '$lib/components/Separator.svelte';
+
+	const { data }: PageProps = $props();
+
+	let { supabase, session } = $derived(data);
+
+	let restaurantId = page.url.searchParams.get('restaurant');
+	let cartDetails: any = $state(null);
+	let loading = $state(true);
+	let pricesChanged = $state(false);
+	let errors = $state<any>({
+		name: null,
+		address: null,
+		phoneCode: null,
+		phone: null,
+		specialInstructions: null
+	});
+
+	let ordering = $state(false);
+
+	let deliveryDetails = $state({
+		name: '',
+		address: '',
+		phoneCode: '+229',
+		phone: '',
+		whatsappCode: '+229',
+		whatsapp: '',
+		specialInstructions: ''
+	});
+
+	const schema = z.object({
+		name: z.string().trim().min(1, 'Name is required'),
+		address: z.string().trim().min(1, 'Address is required'),
+		phoneCode: z.enum(Object.keys(supportedCountries) as [string, ...string[]], {
+			errorMap: () => ({ message: 'Invalid country code' })
+		}),
+		phone: z
+			.string()
+			.trim()
+			.superRefine((val, ctx) => {
+				if (
+					val.trim().length < supportedCountries[deliveryDetails.phoneCode].maxlength ||
+					val.trim().length > supportedCountries[deliveryDetails.phoneCode].maxlength
+				) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: `Phone number must be ${supportedCountries[deliveryDetails.phoneCode].maxlength} digits.`,
+						fatal: true
+					});
+
+					return z.NEVER;
+				}
+			}),
+		specialInstructions: z.string().optional()
+	});
+
+	onMount(async () => {
+		loading = true;
+
+		if (!cart.loaded) {
+			await cart.load();
+		}
+
+		if (!restaurantId) {
+			showToast({ message: 'No restaurant ID provided', type: 'error' });
+			goto('/');
+			return;
+		}
+		cartDetails = cart.getCart(restaurantId);
+
+		if (!cartDetails) {
+			showToast({ message: 'There is no cart for this restaurant', type: 'error' });
+			goto('/');
+			return;
+		}
+
+		// Validate prices haven't changed since items were added to cart
+		await validateCartPrices();
+
+		loading = false;
+	});
+
+	// Check if item prices have changed and update cart if needed
+	const validateCartPrices = async () => {
+		if (!cartDetails || !restaurantId) return;
+
+		try {
+			const currentItems = await restaurantRepository.getItemsByRestaurantId(
+				supabase,
+				restaurantId
+			);
+
+			let hasChanges = false;
+			let newTotal = 0;
+
+			const updatedItems = cartDetails.items.map((cartItem: any) => {
+				const currentItem = currentItems.find((item) => item.id === cartItem.id);
+
+				if (!currentItem) {
+					// Item no longer exists
+					hasChanges = true;
+					return null;
+				}
+
+				const currentPrice = currentItem.discount_price || currentItem.price;
+				const cartPrice = cartItem.discount_price || cartItem.price;
+
+				if (currentPrice !== cartPrice) {
+					hasChanges = true;
+					// Update cart item with new price
+					const updatedItem = {
+						...cartItem,
+						price: currentItem.price,
+						discount_price: currentItem.discount_price
+					};
+					newTotal += currentPrice * cartItem.quantity;
+					return updatedItem;
+				}
+
+				newTotal += cartPrice * cartItem.quantity;
+				return cartItem;
+			}).filter(Boolean);
+
+			if (hasChanges) {
+				pricesChanged = true;
+				// Update cartDetails with new prices
+				cartDetails = {
+					...cartDetails,
+					items: updatedItems,
+					total: newTotal
+				};
+
+				showToast({
+					message: 'Some item prices have changed. Please review your cart.',
+					type: 'info'
+				});
+			}
+		} catch (error) {
+			console.error('Error validating cart prices:', error);
+		}
+	};
+
+	const handleCheckout = async () => {
+		ordering = true;
+		errors = {
+			name: null,
+			address: null,
+			phoneCode: null,
+			phone: null,
+			specialInstructions: null
+		};
+
+		try {
+			const { phoneCode, ...parsedData } = schema.parse(deliveryDetails);
+			const dataToSend = {
+				...parsedData,
+				phone: `${phoneCode}${parsedData.phone.replace(/\D/g, '')}`,
+				restaurantId: restaurantId as string,
+				items: cartDetails.items.map((item: any) => ({
+					id: item.id,
+					quantity: item.quantity,
+					price: item.discount_price || item.price
+				}))
+			};
+			let order = await ordersRepository.placeOrder(
+				supabase,
+				dataToSend,
+				session?.user.id as string
+			);
+			cart.deleteCart(restaurantId as string);
+			showToast({ message: 'Order placed successfully', type: 'success' });
+			if (order?.payment_status === 'pending') {
+				showToast({
+					message: 'Please complete your payment to confirm your order',
+					type: 'info'
+				});
+				goto(`/orders/${order.id}`);
+			}
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				errors = error.flatten().fieldErrors;
+			} else {
+				console.error('Unexpected error:', error);
+				showToast({ message: 'An unexpected error occurred', type: 'error' });
+			}
+		} finally {
+			ordering = false;
+		}
+	};
+</script>
+
+<Seo
+	title="Checkout {cartDetails?.restaurantDetails.name || ''} - ChowBenin"
+	description="Checkout your order on ChowBenin"
+/>
+
+<div class="flex h-full w-full flex-col items-center justify-center">
+	{#if loading}
+		<div class="flex flex-col items-center justify-center gap-2 py-10">
+			<iconify-icon icon="eos-icons:loading" width="32" height="32" class="text-primary"
+			></iconify-icon>
+			<p class="text-text-muted">Loading checkout...</p>
+		</div>
+	{:else if cartDetails}
+		<div class="bg-background flex w-full max-w-2xl flex-col justify-center p-4">
+			<h2 class="text-2xl font-bold">Checkout for {cartDetails.restaurantDetails.name}</h2>
+
+			{#if pricesChanged}
+				<div
+					class="mt-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
+				>
+					<iconify-icon icon="mdi:alert-circle" width="24" height="24" class="text-amber-600"
+					></iconify-icon>
+					<div>
+						<p class="font-semibold text-amber-800">Prices Updated</p>
+						<p class="text-sm text-amber-700">
+							Some item prices have changed since you added them to your cart. The updated prices
+							are shown below.
+						</p>
+					</div>
+				</div>
+			{/if}
+
+			<form class="mt-[32px] space-y-[24px]">
+				<div>
+					<label for="name" class="form-label">Name</label>
+					<input
+						type="text"
+						id="name"
+						class="form-input mt-1 block"
+						class:form-error={errors.name}
+						bind:value={deliveryDetails.name}
+						placeholder="John Doe"
+					/>
+					{#if errors.name}
+						{#each errors.name as error, index (index)}
+							<p class="mt-2 text-sm text-red-600">{error}</p>
+						{/each}
+					{/if}
+				</div>
+				<div>
+					<label for="address" class="form-label">Address</label>
+					<input
+						type="text"
+						id="address"
+						class="form-input mt-1 block"
+						class:form-error={errors.address}
+						bind:value={deliveryDetails.address}
+						placeholder="123 Main St, Cotonou"
+					/>
+					{#if errors.address}
+						{#each errors.address as error, index (index)}
+							<p class="mt-2 text-sm text-red-600">{error}</p>
+						{/each}
+					{/if}
+				</div>
+				<div>
+					<label for="phone" class="form-label">Phone</label>
+					<PhoneInput
+						bind:countryCode={deliveryDetails.phoneCode}
+						bind:phoneNumber={deliveryDetails.phone}
+						error={errors.phone}
+					/>
+					{#if errors.phone}
+						{#each errors.phone as error, index (index)}
+							<p class="mt-2 text-sm text-red-600">{error}</p>
+						{/each}
+					{/if}
+					<p class="mt-2 text-sm text-gray-500">
+						The delivery person will contact you on this number.
+					</p>
+				</div>
+
+				<div
+					aria-live="polite"
+					aria-atomic="true"
+					role="alert"
+					aria-relevant="all"
+					aria-label="Special Instructions"
+				>
+					<label for="specialInstructions" class="form-label">
+						Special Instructions (Optional)
+					</label>
+
+					<textarea
+						id="specialInstructions"
+						class="form-textarea mt-1 block"
+						bind:value={deliveryDetails.specialInstructions}
+						placeholder="Any special requests or instructions for the restaurant?"
+						rows="3"
+						class:form-error={errors.specialInstructions}
+					></textarea>
+
+					{#if errors.specialInstructions}
+						{#each errors.specialInstructions as error, index (index)}
+							<p class="mt-2 text-sm text-red-600">{error}</p>
+						{/each}
+					{/if}
+				</div>
+
+				<div
+					class="mt-[60px] rounded-[12px] border border-[#f1f1f1] bg-white px-[20px] py-[24px] text-sm"
+				>
+					<ul class="w-full">
+						{#each cartDetails.items as item, index (index)}
+							<li class="flex justify-between p-2">
+								<span class="text-text-muted uppercase">{item.name}</span>
+								<span>
+									{item.quantity} x {appSettings.formatPrice(item.discount_price || item.price)}
+								</span>
+							</li>
+						{/each}
+					</ul>
+					<Separator py="32px" variant="dashed" color="#DADADA" />
+					<ul class="w-full space-y-2 px-2">
+						<li class="flex justify-between">
+							<span class="text-text-muted uppercase">Sub-Total:</span>
+							<span>{appSettings.formatPrice(cartDetails.total)}</span>
+						</li>
+						<li class="flex justify-between">
+							<span class="text-text-muted uppercase">Delivery Fee:</span>
+							<span>{appSettings.formatPrice(appSettings.deliveryFee)}</span>
+						</li>
+						<li class="flex justify-between">
+							<span class="text-text-muted uppercase">Service Fee:</span>
+							<span>{appSettings.formatPrice(appSettings.serviceCharge)}</span>
+						</li>
+						<li class="flex justify-between">
+							<span class="text-text-muted uppercase">Total:</span>
+							<span>
+								{appSettings.formatPrice(
+									cartDetails.total + appSettings.deliveryFee + appSettings.serviceCharge
+								)}
+							</span>
+						</li>
+					</ul>
+				</div>
+
+				<p class="text-text-muted text-center text-xs">
+					By placing this order, you agree to our
+					<a href="/legal/terms-of-service" class="text-primary underline">Terms of Service</a>,
+					<a href="/legal/refund-policy" class="text-primary underline">Refund Policy</a>, and
+					<a href="/legal/delivery-policy" class="text-primary underline">Delivery Policy</a>.
+				</p>
+
+				<button
+					class="btn w-full rounded-full"
+					onclick={async (event) => {
+						event.preventDefault();
+						// Handle checkout logic here
+						await handleCheckout();
+					}}
+				>
+					{#if ordering}
+						<iconify-icon icon="eos-icons:loading" width="20" height="20" style="color: #fff"
+						></iconify-icon>
+					{:else}
+						<span>Place Order</span>
+					{/if}
+				</button>
+			</form>
+		</div>
+	{:else}
+		<p>No cart found for this restaurant.</p>
+	{/if}
+</div>
