@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, Tables } from '../types/database.types';
+import type { Database, Enums, Tables } from '$lib/types/database.types';
 
 export type Order = Tables<'orders'> & {
 	order_items: (Tables<'order_items'> & {
@@ -124,10 +124,13 @@ const createRepo = () => {
 	};
 
 	const verifyOrderPayment = async (
-		supabase: SupabaseClient,
 		orderId: string,
 		transactionRef: string
-	): Promise<boolean> => {
+	): Promise<{
+		success: boolean;
+		error?: string | null;
+		status?: 'success' | 'pending' | 'failed' | null;
+	}> => {
 		try {
 			const response = await fetch(`/api/orders/verify/${orderId}`, {
 				method: 'POST',
@@ -138,17 +141,48 @@ const createRepo = () => {
 			})
 
 			if (!response.ok) {
-				console.error('Failed to verify payment:', response.statusText);
-				return false;
-			}
+				const result = await response.json();
 
+				console.error('Failed to verify payment:', response.statusText);
+				return {
+					success: false,
+					error: 'Failed to verify payment',
+					status: result.status || null
+				};
+			}
+			
 			const result = await response.json();
-			return result.success === true;
+
+			return {
+				success: result.success,
+				error: result.error || null,
+				status: result.status || null
+			};
 		} catch (error) {
 			console.error('Error verifying payment:', error);
-			return false;
+			return {
+				success: false,
+				error: 'Error verifying payment'
+			};
 		}
 	};
+
+	const updatePaymentStatus = async (
+		supabase: SupabaseClient,
+		orderId: string,
+		transactionRef: string,
+		status: Enums<'payment_status'>
+	) => {
+		const { error } = await supabase.rpc('update_payment_status', {
+			p_order_id: orderId,
+			p_transaction_ref: transactionRef,
+			p_status: status
+		});
+
+		if (error) {
+			throw error;
+		}
+	}
 
 	return {
 		getAll,
@@ -156,7 +190,8 @@ const createRepo = () => {
 		subscribeToOrderChanges,
 		placeOrder,
 		verifyOrderPayment,
-		getPaymentByTransactionRef
+		getPaymentByTransactionRef,
+		updatePaymentStatus
 	};
 };
 
