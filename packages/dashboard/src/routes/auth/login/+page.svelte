@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
 	import { tick } from 'svelte';
 	import OtpInput from '$lib/components/OtpInput.svelte';
 	import { showToast } from '$lib/utils/toaster.svelte.js';
@@ -132,12 +131,18 @@
 				loading = false;
 				return;
 			}
+
+			// Refresh auth state before navigating to ensure session is properly established
+			await auth.refresh();
+
 			showToast({
 				type: 'success',
 				message: 'Welcome to ChowBenin Dashboard!'
 			});
-			goto(redirectTo);
-			await auth.refresh();
+
+			// Use window.location to force a full page reload which ensures
+			// the server-side hooks run with the new session cookies
+			window.location.href = redirectTo;
 		} catch {
 			showToast({
 				type: 'error',
