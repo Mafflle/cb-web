@@ -15,7 +15,6 @@
 	}: {
 		authNav?: boolean;
 		showSearchButton?: boolean;
-		searchTerm?: string;
 	} = $props();
 
 	let dropdownOpen = $state(false);

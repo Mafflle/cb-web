@@ -1,10 +1,25 @@
 import type { RestaurantOpeningHours } from "../types/restaurants.types";
 
-export const getOrderTotalPrice = (order: any) => {
-	if (order.total_price !== undefined) {
-		return order.total_price;
+/**
+ * Gets the total price for an order including delivery fee and service charge.
+ * If the order already has a 'total' field, it returns that.
+ * Otherwise, it calculates from total_price + delivery_fee + service_charge.
+ */
+export const getOrderTotalPrice = (order: {
+	total?: number;
+	total_price?: number;
+	delivery_fee?: number;
+	service_charge?: number;
+}): number => {
+	// If order has a pre-calculated total, use that
+	if (order.total !== undefined) {
+		return order.total;
 	}
-	return order.total_price + order.delivery_fee + order.service_charge;
+	// Otherwise calculate from components
+	const totalPrice = order.total_price ?? 0;
+	const deliveryFee = order.delivery_fee ?? 0;
+	const serviceCharge = order.service_charge ?? 0;
+	return totalPrice + deliveryFee + serviceCharge;
 };
 
 export const convertAmount = (amount: number, exchangeRate: number): number => {
